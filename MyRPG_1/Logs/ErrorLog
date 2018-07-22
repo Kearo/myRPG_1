@@ -1,0 +1,22 @@
+2018-07-22 20:14:52.061
+clientConnect: java.net.ConnectException: Connection refused: connect
+	at java.net.DualStackPlainSocketImpl.connect0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketConnect(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.doConnect(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(Unknown Source)
+	at java.net.AbstractPlainSocketImpl.connect(Unknown Source)
+	at java.net.PlainSocketImpl.connect(Unknown Source)
+	at java.net.SocksSocketImpl.connect(Unknown Source)
+	at java.net.Socket.connect(Unknown Source)
+	at java.net.Socket.connect(Unknown Source)
+	at java.net.Socket.<init>(Unknown Source)
+	at java.net.Socket.<init>(Unknown Source)
+	at clientSide.TCPClient.connect(TCPClient.java:31)
+	at clientSide.TCPClient.<init>(TCPClient.java:23)
+	at game.GameLogicManager.init(GameLogicManager.java:43)
+	at game.GameLogicManager.<init>(GameLogicManager.java:32)
+	at game.GameManager.startGame(GameManager.java:87)
+	at game.GameManager.init(GameManager.java:77)
+	at game.GameManager.<init>(GameManager.java:51)
+	at game.Main.main(Main.java:5)
+
