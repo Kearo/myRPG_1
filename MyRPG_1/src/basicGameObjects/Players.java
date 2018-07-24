@@ -15,7 +15,7 @@ import render.Transform;
 import world.World;
 
 public class Players {
-	
+
 	// private String name;
 	// private int level;
 	protected int hp;
@@ -42,16 +42,16 @@ public class Players {
 	protected boolean moved = false;
 	protected Skill[] skillBar;
 	protected World world;
-	
-	public static void initTex(){
+
+	public static void initTex() {
 		tex = new Texture("player/" + "sword1_diagonal.png");
 	}
-	
+
 	public Players(String id, float posX, float posY, InetAddress ip, boolean serverSide, World world) {
 		transform = new Transform();
 		transform.pos.set(posX, posY, 0);
 		skillBar = new Skill[5];
-		skillBar[0] = new Skill(0,0, world, id , serverSide);
+		skillBar[0] = new Skill(0, 0, world, id, serverSide);
 		this.id = id;
 		this.ip = ip;
 		this.serverSide = serverSide;
@@ -64,23 +64,24 @@ public class Players {
 		direction = new Vector2f(0, 0);
 	}
 
-	public void update(){
-		if(serverSide){
-			if(Collision.checkCollisionPlayers(this, world)){
+	public void update() {
+		if (serverSide) {
+			if (!Collision.checkCollisionPlayers(this, world)) {
 				move();
-			}else{
+			} else {
 				direction.x = 0;
 				direction.y = 0;
-				world.manageUDPOutput(
-						new String("move/" + id + "/" + direction.x + "/" + direction.y + "/"), "server");
+				world.addToBuffer(new String("move/player/" + id + "/" + direction.x + "/" + direction.y + "/"
+						+ transform.pos.x + "/" + transform.pos.y +"/"));
 			}
-		}else{
+
+		} else {
 			move();
 		}
 		regenerations();
 		checkSpellCD();
 	}
-	
+
 	protected void regenerations() {
 		long l = System.nanoTime();
 		long l1 = (l - regCd);
@@ -94,7 +95,7 @@ public class Players {
 			regCd = System.nanoTime();
 		}
 	}
-	
+
 	protected void checkSpellCD() {
 		long l = System.nanoTime();
 		long l1 = l - skillcd;
@@ -102,42 +103,46 @@ public class Players {
 		if (l1 > cd)
 			skillLock1 = false;
 	}
-	
-	public void hit(String hitID, String hitInvokerID){
+
+	public void hit(String hitID, String hitInvokerID) {
 		gotHit = false;
 		System.out.println("hit by skill: " + hitID + " from " + hitInvokerID);
 	}
-	
-	public void death(){
+
+	public void death() {
 		delete = true;
 	}
-	public void useSkill(World world, int skillBarNumber, float dx, float dy){
-		Skill s = new Skill(transform.pos.x, transform.pos.y, world, skillBar[skillBarNumber].getID() , serverSide);
-		s.setDirection(dx, dy);
-		//world.addSkill(s);
-		
+
+	public void useSkill(World world, int skillBarNumber, float dx, float dy) {
+		world.addSkill(skillBar[skillBarNumber].getID(), transform.pos.x, transform.pos.y, id, dx, dy);
 	}
 	
-	public void dmg(int dmg){
+	public void useSkill(World world, Skill s){//later form skillCreation
+//		Skill s = new Skill(transform.pos.x, transform.pos.y, world, skillBar[skillBarNumber].getID(), serverSide);
+//		s.setDirection(dx, dy);
+//		world.addSkill(s);
+	}
+
+	public void dmg(int dmg) {
 		setHp(getHp() - dmg);
 	}
-	
+
 	private void move() {
-		if(direction.x != 0 || direction.y != 0){
+		if (direction.x != 0 || direction.y != 0) {
 			moved = true;
-		}else{
+		} else {
 			moved = false;
 		}
 		transform.pos.add(new Vector3f(direction, 0));
 	}
-	
-	public void setDirection(float dx, float dy, World world){
+
+	public void setDirection(float dx, float dy, World world) {
 		direction.x = dx;
 		direction.y = dy;
 	}
-	
+
 	public void render(Shader shader, Camera camera, World world) {
-		if(tex != null){
+		if (tex != null) {
 			Matrix4f target = camera.getProjection();
 			target.mul(world.getWorldMatrix());
 
@@ -148,19 +153,19 @@ public class Players {
 			Assets.getModel().render();
 		}
 	}
-	
-	public Transform getTransform(){
+
+	public Transform getTransform() {
 		return transform;
 	}
-	
-	public Vector2f getDirection(){
+
+	public Vector2f getDirection() {
 		return direction;
 	}
-		
-	public String getID(){
+
+	public String getID() {
 		return id;
 	}
-	
+
 	public int getHp() {
 		return hp;
 	}
@@ -168,56 +173,56 @@ public class Players {
 	public void setHp(int hp) {
 		this.hp = hp;
 	}
-	
-	public void setDelete(){
+
+	public void setDelete() {
 		delete = true;
 	}
-	
-	public boolean getDelete(){
+
+	public boolean getDelete() {
 		return delete;
 	}
-	
-	public boolean getHit(){
+
+	public boolean getHit() {
 		return gotHit;
 	}
-	
-	public void setHit(boolean hit){
+
+	public void setHit(boolean hit) {
 		gotHit = hit;
 	}
-	
-	public void setHitID(String hitID){
+
+	public void setHitID(String hitID) {
 		this.hitID = hitID;
 	}
-	
-	public void setHitInvokerID(String hitInvokerID){
+
+	public void setHitInvokerID(String hitInvokerID) {
 		this.hitInvokerID = hitInvokerID;
 	}
-	
-	public String getHitInvokerID(){
+
+	public String getHitInvokerID() {
 		return hitInvokerID;
 	}
-	
-	public String getHitID(){
+
+	public String getHitID() {
 		return hitID;
 	}
-	
-	public void setIP(InetAddress ip){
+
+	public void setIP(InetAddress ip) {
 		this.ip = ip;
 	}
-	
-	public InetAddress getIp(){
+
+	public InetAddress getIp() {
 		return ip;
 	}
-	
-	public boolean getMoved(){
+
+	public boolean getMoved() {
 		return moved;
 	}
-	
-	public void setMoved(){
+
+	public void setMoved() {
 		moved = false;
 	}
-	
-	public float getSpeed(){
+
+	public float getSpeed() {
 		return speed;
 	}
 }

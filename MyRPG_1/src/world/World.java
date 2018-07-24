@@ -337,64 +337,66 @@ public class World {
 			manageInput();
 			mainPlayer.update(camera, this);
 		}
-
 		if (serverWorld) {
+			List<String> tempBuffer = new ArrayList<String>(sendBuffer);
+			sendBuffer.clear();
 			for (Players p : players) {
-				boolean temp = false;
+				boolean moveIndicator = false;
 				if (p.getMoved()) {
-					temp = true;
+					moveIndicator = true;
 				}
 				float x = p.getTransform().pos.x + p.getTransform().scale.x;
 				float y = p.getTransform().pos.y - p.getTransform().scale.y;
 				float xdif;
 				float ydif;
 				float sx, sy;
-				for (String s : sendBuffer) {// String same as input
-					sx = 0;
-					sy = 0;
-					xdif = 0;
-					ydif = 0;
-					String[] q = s.split("/");
-					switch (q[0]) {
-					case "spawn": // (monster/player)/ID/InetAdress/posX/posY/
-									// statsLAter
-						sx = Float.parseFloat(q[4]);
-						sy = Float.parseFloat(q[5]);
-						break;
-					case "move": // (monster/player)/ID/directionX/directionY/posX/posY/
-						sx = Float.parseFloat(q[5]);
-						sy = Float.parseFloat(q[6]);
-						break;
-					case "turn": // (monster/player)/ID/turnDegree/posX/posY/
-						sx = Float.parseFloat(q[4]);
-						sy = Float.parseFloat(q[5]);
-						break;
-					case "attack": // ID/posX/posY/invokerID/directionX/directionY/
-						sx = Float.parseFloat(q[2]);
-						sy = Float.parseFloat(q[3]);
-						break;
-					// case "getHit": //
-					// (monster/player)/ID/InvokerID/attackID/posX/posY/
-					// sx = Integer.parseInt(q[5]);
-					// sy = Integer.parseInt(q[6]);
-					// break;
-					case "despawn": // (monster/player)/ID/poX/posY/
-						sx = Integer.parseInt(q[3]);
-						sy = Integer.parseInt(q[4]);
-						break;
-					}
+				if (tempBuffer.size() > 0) {
+					for (String s : tempBuffer) {// String same as input
+						sx = 0;
+						sy = 0;
+						xdif = 0;
+						ydif = 0;
+						String[] q = s.split("/");
+						switch (q[0]) {
+						case "spawn": // (monster/player)/ID/InetAdress/posX/posY/
+										// statsLAter
+							sx = Float.parseFloat(q[4]);
+							sy = Float.parseFloat(q[5]);
+							break;
+						case "move": // (monster/player)/ID/directionX/directionY/posX/posY/
+							sx = Float.parseFloat(q[5]);
+							sy = Float.parseFloat(q[6]);
+							break;
+						case "turn": // (monster/player)/ID/turnDegree/posX/posY/
+							sx = Float.parseFloat(q[4]);
+							sy = Float.parseFloat(q[5]);
+							break;
+						case "attack": // ID/posX/posY/invokerID/directionX/directionY/
+							sx = Float.parseFloat(q[2]);
+							sy = Float.parseFloat(q[3]);
+							break;
+						// case "getHit": //
+						// (monster/player)/ID/InvokerID/attackID/posX/posY/
+						// sx = Integer.parseInt(q[5]);
+						// sy = Integer.parseInt(q[6]);
+						// break;
+						case "despawn": // (monster/player)/ID/poX/posY/
+							sx = Integer.parseInt(q[3]);
+							sy = Integer.parseInt(q[4]);
+							break;
+						}
 
-					xdif = x - sx;
-					ydif = y - sy;
+						xdif = x - sx;
+						ydif = y - sy;
 
-					xdif = Math.abs(xdif);
-					ydif = Math.abs(ydif);
-					if (xdif <= sendRadius && ydif <= sendRadius) {
-						manageUDPOutput(s, p.getIp().toString());
+						xdif = Math.abs(xdif);
+						ydif = Math.abs(ydif);
+						if (xdif <= sendRadius && ydif <= sendRadius) {
+							manageUDPOutput(s, p.getIp().toString());
+						}
 					}
 				}
-				sendBuffer.clear();
-				if (temp) {
+				if (moveIndicator) {
 					y = Math.abs(y);
 					for (Players w : players) {
 						if (!w.getMoved()) {
@@ -450,6 +452,7 @@ public class World {
 					}
 				}
 			}
+			tempBuffer.clear();
 		}
 	}
 
@@ -526,8 +529,9 @@ public class World {
 				for (Players p : players) {
 					if (p.getID().equals(distributor[1])) {
 						p.setDirection(Float.parseFloat(distributor[2]), Float.parseFloat(distributor[3]), this);
-						sendBuffer.add(new String("move/player/"+p.getID()+"/"+distributor[2]+"/"+distributor[3])+"/"+
-						p.getTransform().pos.x+"/"+p.getTransform().pos.y+"/");
+						sendBuffer.add(
+								new String("move/player/" + p.getID() + "/" + distributor[2] + "/" + distributor[3])
+										+ "/" + p.getTransform().pos.x + "/" + p.getTransform().pos.y + "/");
 						break;
 					}
 				}
@@ -539,7 +543,9 @@ public class World {
 					if (p.getID().equals(distributor[1])) {
 						p.useSkill(this, Integer.parseInt(distributor[2]), Float.parseFloat(distributor[3]),
 								Float.parseFloat(distributor[4]));
-					//	sendBuffer.add(new String("attack/"+ "/"+  "/"+distributor[1]+"/"+distributor[2] +"/"+distributor[3])+"/");
+						// sendBuffer.add(new String("attack/"+ "/"+
+						// "/"+distributor[1]+"/"+distributor[2]
+						// +"/"+distributor[3])+"/");
 					}
 				}
 				break;
@@ -699,7 +705,7 @@ public class World {
 			}
 		} else {
 			for (int i = 0; i < players.size(); i++) {
-				//System.out.println(players.get(i).getIp());
+				// System.out.println(players.get(i).getIp());
 				DatagramPacket packet = new DatagramPacket(data, data.length, players.get(i).getIp(), 7777);
 				gsw.sendOnput(packet);
 			}
@@ -856,7 +862,6 @@ public class World {
 	}
 
 	public void addPlayer(String id, InetAddress ip, float x, float y) {
-		System.out.println(ip+"EE");
 		Players p = new Players(id, x, y, ip, true, this);
 		players.add(p);
 		if (online && serverWorld) {
@@ -885,8 +890,7 @@ public class World {
 		players.add(mainPlayer);
 		camera.getPosition().set(transform.pos.mul(-scale, new Vector3f()));
 		if (online) {
-			manageUDPOutput(new String("login/" + id + "/" + address + "/" + i1 * 2 + "/" + i2 * 2 + "/"),
-					"server");
+			manageUDPOutput(new String("login/" + id + "/" + address + "/" + i1 * 2 + "/" + i2 * 2 + "/"), "server");
 		}
 	}
 

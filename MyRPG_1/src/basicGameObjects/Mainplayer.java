@@ -28,7 +28,7 @@ public class Mainplayer extends Players {
 	private Vector2f moveReminder;
 	private boolean onlineMode;
 	private static Texture tex;
-	
+
 	private List<Enemy> elist;
 	private List<Players> plist;
 
@@ -120,7 +120,9 @@ public class Mainplayer extends Players {
 				}
 				break;
 			case "attackMove":
-				useSkill(world);
+				if (!skillLock1) {
+					useSkill(world);
+				}
 				break;
 			case "pickUpItem":
 				checkForItem();
@@ -130,13 +132,12 @@ public class Mainplayer extends Players {
 		}
 		if (!(moveReminder.x == movement.x && moveReminder.y == movement.y)) {
 			if (movement.x != 0 || movement.y != 0) {
-				world.manageUDPOutput(new String("move/" + id + "/" + movement.x + "/" + movement.y + "/"),
-						"server");
+				world.manageUDPOutput(new String("move/" + id + "/" + movement.x + "/" + movement.y + "/"), "server");
 			} else {
 				if (moveCheck) {
 					moveCheck = false;
-					world.manageUDPOutput(
-							new String("move/" + id + "/" + movement.x + "/" + movement.y + "/"), "server");
+					world.manageUDPOutput(new String("move/" + id + "/" + movement.x + "/" + movement.y + "/"),
+							"server");
 				}
 			}
 		}
