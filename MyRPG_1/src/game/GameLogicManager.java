@@ -20,7 +20,7 @@ public class GameLogicManager implements Runnable{
 	private static TCPClient tcp;
 	private static String playerName = "test2";
 	private static String pw = "1234";
-	private static String address = "192.168.123.27";
+	private static String address = "192.168.123.27";//192.168.123.27
 	private Window window;
 	
 	public GameLogicManager(boolean worldIP, String ip){

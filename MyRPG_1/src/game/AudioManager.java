@@ -56,4 +56,9 @@ public class AudioManager {
 			musicPlayer.setPosition(x, y, z);
 		}
 	}
+	
+	public static void closeAudio(){
+		AudioMaster.cleanUp();
+	}
 }
+

@@ -83,40 +83,11 @@ public class Enemy {
 	}
 
 	private void onlineMode() {
-		if (world.getServerWorld()) {
-			if (death && !lootGenerated) {
-				generateLoot();
-				sendInfo = true;
-				// System.out.println("looot" + id);
-			}
-			if (!inCombat && !death) {
-			//	move();
-				sendInfo = true;
-			}
-		} else {
-			if (!inCombat && !death) {
-				if (move != new Vector2f(0, 0)) {
-					transform.pos.add(new Vector3f(move, 0));
-				}
-				if (aggressiv) {
-					checkForPlayers();
-				}
-			} else {
-				if (!death) {
-					chase();
-					attack();
-				} else {
-					if (lootGenerated) {
-						long l = System.nanoTime();
-						l = (l - deathTimer) / 1000000000;
-						if (l >= secondsAfterDeathToRemove) {
-							delete = true;
-						}
-					}
-				}
-
-			}
-		}
+		
+		
+		
+		
+		
 	}
 
 	private void offlineMode() {

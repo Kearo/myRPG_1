@@ -40,6 +40,7 @@ public class Skill {
 	protected boolean onlineMode;
 	protected boolean serverSide;
 	protected boolean moved = false;
+	protected boolean eventAtDestination = false;
 
 	public static void initTex() {
 		tex = new Texture("skills/" + "test_skill.png");
@@ -47,7 +48,7 @@ public class Skill {
 	}
 
 	public Skill(float posx, float posy, World world, String invokerID, boolean serverSide) {
-		this.id = invokerID +":"+ id +":"+ world.getSkillIDcounter();
+		this.id = invokerID + ":" + id + ":" + world.getSkillIDcounter();
 		this.world = world;
 		this.invokerID = invokerID;
 		transform = new Transform();
@@ -57,7 +58,8 @@ public class Skill {
 		this.serverSide = serverSide;
 	}
 
-	public Skill(String id, float posx, float posy, World world, String invokerID, float dx, float dy, boolean serverSide ) {
+	public Skill(String id, float posx, float posy, World world, String invokerID, float dx, float dy,
+			boolean serverSide) {
 		this.id = id;
 		this.world = world;
 		this.invokerID = invokerID;
@@ -77,45 +79,58 @@ public class Skill {
 
 	protected void move() {
 		if (gotDirection) {
-			if(direction.x != 0 || direction.y != 0){
+			if (direction.x != 0 || direction.y != 0) {
 				moved = true;
-			}else{
+			} else {
 				moved = false;
 			}
 			if (traveldistance > 0) {
 				traveldistance = traveldistance - speed;
 				transform.pos.add(new Vector3f(direction.x * speed, direction.y * speed, 0));
 			} else {
-				delete = true;
+				if (!eventAtDestination) {
+					delete = true;
+				}
 			}
 		}
 	}
 
 	public void update() {
-		if(onlineMode){
+		if (onlineMode) {
 			onlineMode();
-		}else{
+		} else {
 			offlineMode();
 		}
 	}
-	
-	private void onlineMode(){
-		move();
-		if (!world.getServerWorld()) {
-			checkCollision();
+
+	private void onlineMode() {
+		if (!gotHit) {
+			move();
+			if (world.getServerWorld()) {
+				// checkCollision();
+			}
+		} else {
+			if (!world.getServerWorld()) {
+				hit();
+			}
 		}
 	}
-	
-	private void offlineMode(){
+
+	private void offlineMode() {
 		move();
 		checkCollision();
 	}
 
-	public void hit(String hitID, String invokerID) {
-		// System.out.println("skill hit " + hitID + " " + invokerID);
-		// eventByHit();
-		// gotHit = true;
+	public void hit() {
+		gotHit = true;
 		delete = true;
+		eventByHit();
+	}
+
+	public void hit(String hitID, String invokerID) {
+		gotHit = true;
+		delete = true;
+		eventByHit();
 	}
 
 	public void hit(Skill s) {
@@ -252,7 +267,7 @@ public class Skill {
 			if (plist.size() > 0) {
 				for (int i = 0; i < plist.size(); i++) {
 					Transform hitTransform;
-					hitTransform = elist.get(i).getTransform();
+					hitTransform = plist.get(i).getTransform();
 					float px = hitTransform.pos.x + hitTransform.scale.x;
 					float py = hitTransform.pos.y - hitTransform.scale.y;
 					float rx = hitTransform.scale.x + 0f;
@@ -343,7 +358,7 @@ public class Skill {
 							hitID = elist.get(i).getID();
 							hit(elist.get(i));
 							break;
-						}else{
+						} else {
 							hit = false;
 						}
 
@@ -460,8 +475,8 @@ public class Skill {
 	public static String getAudio() {
 		return audio;
 	}
-	
-	public void setPos(float x, float y){
+
+	public void setPos(float x, float y) {
 		transform.pos.x = x;
 		transform.pos.y = y;
 	}
@@ -473,12 +488,12 @@ public class Skill {
 	public void setCreated() {
 		created = false;
 	}
-	
-	public boolean getMoved(){
+
+	public boolean getMoved() {
 		return moved;
 	}
-	
-	public void setMoved(){
+
+	public void setMoved() {
 		moved = false;
 	}
 }

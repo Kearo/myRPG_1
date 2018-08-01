@@ -83,6 +83,7 @@ public class Mainplayer extends Players {
 
 	}
 
+	
 	public void update(Camera camera, World world) {
 		if (!onlineMode) {
 			offlineMode(camera, world);
@@ -147,7 +148,7 @@ public class Mainplayer extends Players {
 		if (moveReminder.y != movement.y) {
 			moveReminder.y = movement.y;
 		}
-		move(direction);
+	//	move(direction); //cause already in player of mainplayer
 		actionsToDo.clear();
 		regenerations();
 		checkSpellCD();
@@ -259,7 +260,8 @@ public class Mainplayer extends Players {
 			y = y / lenght;
 			// System.out.println(world.getCamera().getPosition().x);
 			skillcd = System.nanoTime();
-			world.manageUDPOutput(new String("attack/" + id + "/" + "0" + "/" + x + "/" + y + "/"), "server");
+			// 0 = skillBarNumber, x/y = direction
+			world.manageUDPOutput(new String("attack/" + s.getID() + "/" + "0" + "/" + x + "/" + y + "/" + id + "/"), "server");
 		} else {
 			if (mana > Skill.manaCost) {
 				mana -= Skill.manaCost;

@@ -30,6 +30,7 @@ public class TCPClient {
 		try {
 			socket = new Socket(address, port);
 			setStreams();
+			
 			buffer = new byte[1024];
 		} catch (IOException e) {
 			e.printStackTrace();

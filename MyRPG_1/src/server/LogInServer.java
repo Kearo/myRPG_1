@@ -45,7 +45,6 @@ public class LogInServer {
 		try {
 			ssc = ServerSocketChannel.open();
 			ssc.configureBlocking(false);
-		//	ssc.bind(serverAddress);
 		
 			ssc.socket().bind(serverAddress);
 			//System.out.println(ssc.socket().getInetAddress());

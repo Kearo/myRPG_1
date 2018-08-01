@@ -10,6 +10,10 @@ import world.World;
 public class Collision {
 
 	public static boolean checkCollisionPlayers(Players p, World world) {
+		if(true){
+			return false;
+		}
+		
 		List<Enemy> elist;
 		List<Players> plist;
 		
@@ -61,9 +65,9 @@ public class Collision {
 		// ix = Math.abs(ix);
 		iy = Math.abs(iy);
 
-		if (world.getTile((int) ix / 2, (int) iy / 2).isSolid()) {
-			return true;
-		}
+//		if (world.getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+//			return true;
+//		}
 
 		elist = world.getEnemyList();
 		plist = world.getPlayersList();

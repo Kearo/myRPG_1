@@ -146,7 +146,7 @@ public class GameManager {
 
 		}
 		GameLogicManager.setStoppped();
-
+		AudioManager.closeAudio();
 	}
 
 	public static void loginSuccess() {
