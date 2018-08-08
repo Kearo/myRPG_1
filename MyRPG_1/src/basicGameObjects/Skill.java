@@ -42,6 +42,7 @@ public class Skill {
 	protected boolean moved = false;
 	protected boolean eventAtDestination = false;
 	protected Vector2f serverPos_interpolation = new Vector2f(0, 0);
+	protected int power = 5;
 
 	public static void initTex() {
 		tex = new Texture("skills/" + "test_skill.png");
@@ -78,38 +79,6 @@ public class Skill {
 		gotDirection = true;
 	}
 
-	protected void move() {
-		if (gotDirection) {
-			if (direction.x != 0 || direction.y != 0) {
-				moved = true;
-			} else {
-				moved = false;
-			}
-			if (traveldistance > 0) {
-				traveldistance = traveldistance - speed;
-				transform.pos.add(new Vector3f(direction.x * speed, direction.y * speed, 0));
-				//later, cause momentarily no movement track
-//				if(onlineMode){
-//					float x = transform.pos.x - serverPos_interpolation.x;
-//					float y = transform.pos.y - serverPos_interpolation.y;
-//					if(x > 5 ||  y > 5 ){
-//						transform.pos.x = x;
-//						transform.pos.y = y;
-//					}else{
-//						float lenght = (float) Math.sqrt(x * x + y * y);
-//						x = x / lenght;
-//						y = y / lenght;
-//						transform.pos.add(new Vector3f(x , y , 0));
-//					}
-//				}
-			} else {
-				if (!eventAtDestination) {
-					delete = true;
-				}
-			}
-		}
-	}
-
 	public void update() {
 		if (onlineMode) {
 			onlineMode();
@@ -124,10 +93,6 @@ public class Skill {
 			if (world.getServerWorld()) {
 				// checkCollision();
 			}
-		} else {
-			if (!world.getServerWorld()) {
-				hit();
-			}
 		}
 	}
 
@@ -136,58 +101,97 @@ public class Skill {
 		checkCollision();
 	}
 
-	public void hit() {
-		gotHit = true;
-		delete = true;
-		eventByHit();
+	protected void move() {
+		if (gotDirection) {
+			if (direction.x != 0 || direction.y != 0) {
+				moved = true;
+			} else {
+				moved = false;
+			}
+			if (traveldistance > 0) {
+				traveldistance = traveldistance - speed;
+				transform.pos.add(new Vector3f(direction.x * speed, direction.y * speed, 0));
+			} else {
+				if (!eventAtDestination) {
+					delete = true;
+				}
+			}
+		}
 	}
 
-	public void hit(String hitID, String invokerID) {
+	public void hit(String hitID, String invokerID, float x, float y, String type) {
 		gotHit = true;
-		delete = true;
-		eventByHit();
+		eventByHit(x, y, type);
 	}
 
-	public void hit(Skill s) {
-		s.hit(id, invokerID);
+	public void hit(Object o) {
+		float x = 0;
+		float y = 0;
+		String type = "";
+		if (o instanceof Skill) {
+			Skill s = ((Skill) o);
+			int pow = s.getPower();
+			if (power > pow) {
+				s.setDelete();
+				power = power - pow;
+			} else {
+				if (power < pow) {
+					delete = true;
+					s.setPower(pow - power);
+				} else {
+					s.setDelete();
+					delete = true;
+				}
+			}
+			x = s.getTransform().pos.x;
+			y = s.getTransform().pos.y;
+			type = "skill";
+		}
+		if (o instanceof Players) {
+			Players p = (Players) o;
+			p.hit(id, invokerID);
+			hitID = p.getID();
+			x = p.getTransform().pos.x;
+			y = p.getTransform().pos.y;
+			type = "player";
+		}
+		if (o instanceof Enemy) {
+			Enemy e = (Enemy) o;
+			e.hit(id, invokerID);
+			hitID = e.getID();
+			x = e.getTransform().pos.x;
+			y = e.getTransform().pos.y;
+			type = "monster";
+		}
 		gotHit = true;
-		delete = true;
-		eventByHit();
+		eventByHit(x, y, type);
 	}
 
-	public void hit(Enemy e) {
-		e.hit(id, invokerID);
-		gotHit = true;
-		delete = true;
-		hitID = e.getID();
-		eventByHit();
-	}
-
-	public void hit(Players p) {
+	public void hit(Mainplayer p, float x, float y, String type) {// offline
 		p.hit(id, invokerID);
 		gotHit = true;
-		delete = true;
-		hitID = p.getID();
-		eventByHit();
+		eventByHit(x, y, type);
 	}
 
-	public void hit(Mainplayer p) {
-		p.hit(id, invokerID);
+	public void hitWall(float x, float y, String type) {
 		gotHit = true;
-		delete = true;
-		eventByHit();
+		eventByHit(x, y, type);
 	}
 
-	public void hitWall() {
-		gotHit = true;
-		delete = true;
-		eventByHit();
-	}
-
-	public void eventByHit() {
+	public void eventByHit(float x, float y, String type) {
 		if (!world.getServerWorld()) {
 			AudioManager.playSoundEffect(audio, transform.pos.x, transform.pos.y, 0);
+			float ex = transform.pos.x - x;
+			float ey = transform.pos.y - y;
+			if (ex > transform.pos.x || ey > transform.pos.y) {
+				System.out.println("tesSkill" + transform.pos.x + "  " + transform.pos.y);
+				transform.pos.x = x;
+				transform.pos.y = y;
+			}
+		} else {
+			world.addToBuffer(type + "/" + id + "/" + invokerID + "/" + x + "/" + y + "/");
 		}
+		delete = true;
 	}
 
 	protected void checkCollision() {
@@ -235,7 +239,7 @@ public class Skill {
 		if (ix >= 128)
 			ix = 127;
 		if (world.getTile((int) ix / 2, (int) (iy) / 2).isSolid()) {
-			hitWall();
+			hitWall(ix, iy, "wall");
 			hit = true;
 		}
 
@@ -442,8 +446,8 @@ public class Skill {
 			Asset_circle.getModel().render();
 		}
 	}
-	
-	public void setInterpolatation(float x, float y){
+
+	public void setInterpolatation(float x, float y) {
 		serverPos_interpolation.set(x, y);
 	}
 
@@ -514,5 +518,13 @@ public class Skill {
 
 	public void setMoved() {
 		moved = false;
+	}
+
+	public int getPower() {
+		return power;
+	}
+
+	public void setPower(int power) {
+		this.power = power;
 	}
 }

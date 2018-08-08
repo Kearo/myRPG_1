@@ -56,6 +56,9 @@ public class Enemy {
 	protected boolean serverSide;
 	protected boolean moved = false;
 	protected Vector2f serverPos_interpolation = new Vector2f(0, 0);
+	
+	protected int walkCounter = 0;
+	protected float walkCounterAddX, walkCounterAddY;
 
 	public static void initTex() {
 		tex = new Texture("monsters/" + "enemy_test.png");

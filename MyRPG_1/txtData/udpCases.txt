@@ -3,7 +3,7 @@ case "spawn": // (monster/player)/ID/InetAdress/posX/posY/ statsLAter
 case "move": // (monster/player)/ID/directionX/directionY/posX/posY/
 case "turn": // (monster/player)/ID/turnDegree/posX/posY/
 case "attack": // ID/posX/posY/invokerID/directionX/directionY/
-case "getHit": // (monster/player)/ID/InvokerID/attackID/posX/posY/
+case "hit": // (monster/player/skill/wall)/ID/InvokerID/posX/posY
 case "despawn": // (monster/player)/ID/poX/posY/
 
 
@@ -14,3 +14,10 @@ case "move": //ID/directionX/directionY/
 case "turn": //ID/turnDegree/
 case "attack": //ID/SkillbarNumber/directionX/directionY/invokerID/
 case "disconnect": //ID/
+
+
+
+
+
+remember:
+enemy = monster

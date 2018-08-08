@@ -381,11 +381,10 @@ public class World {
 							sx = Float.parseFloat(q[2]);
 							sy = Float.parseFloat(q[3]);
 							break;
-						// case "getHit": //
-						// (monster/player)/ID/InvokerID/attackID/posX/posY/
-						// sx = Integer.parseInt(q[5]);
-						// sy = Integer.parseInt(q[6]);
-						// break;
+						 case "hit": // (monster/player/skill)/ID/InvokerID/attackID/posX/posY/
+							sx = Integer.parseInt(q[5]);
+						 	sy = Integer.parseInt(q[6]);
+						 break;
 						case "despawn": // (monster/player)/ID/poX/posY/
 							sx = Integer.parseInt(q[3]);
 							sy = Integer.parseInt(q[4]);
@@ -638,23 +637,32 @@ public class World {
 							distributor[4], Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
 				}
 				break;
-			case "getHit": // (monster/player)/ID/InvokerID/attackID/posX/posY/
-				if (distributor[1].equals("player")) {
-					for (Players p : players) {
-						if (p.getID().equals(distributor[2])) {
-							p.hit(distributor[4], distributor[3]);
+			case "hit": // (monster/player/skill)/ID/InvokerID/posX/posY/
+//				if (distributor[1].equals("player")) {
+//					for (Players p : players) {
+//						if (p.getID().equals(distributor[2])) {
+//							p.hit(distributor[4], distributor[3]);
+//							break;
+//						}
+//					}
+//				}
+//				if (distributor[1].equals("monster")) {
+//					for (Enemy e : enemys) {
+//						if (e.getID().equals(distributor[2])) {
+//							e.hit(distributor[4], distributor[3]);
+//							break;
+//						}
+//					}
+//				}
+				//if (distributor[1].equals("skill")) {
+					for (Skill s : activeSkills) {
+						if (s.getID().equals(distributor[2])) {
+							s.hit(distributor[2], distributor[3], Float.parseFloat(distributor[4]),
+									Float.parseFloat(distributor[5]), distributor[1]);
 							break;
 						}
 					}
-				}
-				if (distributor[1].equals("monster")) {
-					for (Enemy e : enemys) {
-						if (e.getID().equals(distributor[2])) {
-							e.hit(distributor[4], distributor[3]);
-							break;
-						}
-					}
-				}
+				//}
 				break;
 			case "despawn": // (monster/player)/ID/poX/posY/
 				if (distributor[1].equals("player")) {
