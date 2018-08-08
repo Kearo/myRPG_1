@@ -41,6 +41,7 @@ public class Skill {
 	protected boolean serverSide;
 	protected boolean moved = false;
 	protected boolean eventAtDestination = false;
+	protected Vector2f serverPos_interpolation = new Vector2f(0, 0);
 
 	public static void initTex() {
 		tex = new Texture("skills/" + "test_skill.png");
@@ -87,6 +88,20 @@ public class Skill {
 			if (traveldistance > 0) {
 				traveldistance = traveldistance - speed;
 				transform.pos.add(new Vector3f(direction.x * speed, direction.y * speed, 0));
+				//later, cause momentarily no movement track
+//				if(onlineMode){
+//					float x = transform.pos.x - serverPos_interpolation.x;
+//					float y = transform.pos.y - serverPos_interpolation.y;
+//					if(x > 5 ||  y > 5 ){
+//						transform.pos.x = x;
+//						transform.pos.y = y;
+//					}else{
+//						float lenght = (float) Math.sqrt(x * x + y * y);
+//						x = x / lenght;
+//						y = y / lenght;
+//						transform.pos.add(new Vector3f(x , y , 0));
+//					}
+//				}
 			} else {
 				if (!eventAtDestination) {
 					delete = true;
@@ -426,6 +441,10 @@ public class Skill {
 			tex.bind(0);
 			Asset_circle.getModel().render();
 		}
+	}
+	
+	public void setInterpolatation(float x, float y){
+		serverPos_interpolation.set(x, y);
 	}
 
 	public void setListPos(int pos) {

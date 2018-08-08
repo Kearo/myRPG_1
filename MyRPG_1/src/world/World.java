@@ -300,7 +300,7 @@ public class World {
 
 		if (serverWorld) {
 			if (globalEnemyCounter < maxMopsOnMap && respawnTimer <= 0) {
-			//	addEnemy();
+				// addEnemy();
 				if (globalEnemyCounter < maxMopsOnMap / 3) {
 					respawnTimer = fastMopRespawnTimer;
 				} else {
@@ -310,7 +310,7 @@ public class World {
 				respawnTimer--;
 			}
 		}
-		
+
 		for (Players p : players) {// todo
 			p.update();
 			if (p.getDelete()) {
@@ -359,8 +359,8 @@ public class World {
 						String[] q = s.split("/");
 						switch (q[0]) {
 						case "spawn": // (monster/player)/ID/InetAdress/posX/posY/
-							//monster, no inet place
-										// statsLAter
+							// monster, no inet place
+							// statsLAter
 							if (q[1].equals("monster")) {
 								sx = Float.parseFloat(q[3]);
 								sy = Float.parseFloat(q[4]);
@@ -567,17 +567,34 @@ public class World {
 				// Inet not by mosnter
 				// statsLAter
 				if (distributor[1].equals("monster")) {
-					addEnemy(distributor[2], Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]));
+					boolean temp = false;
+					for (Enemy e : enemys) {
+						if (e.getID().equals(distributor[2])) {
+							temp = true;
+							break;
+						}
+					}
+					if (!temp) {
+						addEnemy(distributor[2], Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]));
+						enemys.get(enemys.size()-1).setInterpolatation(Float.parseFloat(distributor[5]), 
+								Float.parseFloat(distributor[6]));
+					}
 				}
 				if (distributor[1].equals("player")) {
 					try {
 						if (!mainPlayer.getID().equals(distributor[2])) {
+							boolean temp = false;
 							for (Players p : players) {
 								if (p.getID().equals(distributor[2])) {
-									addPlayer(distributor[2], InetAddress.getByName(distributor[3]),
-											Float.parseFloat(distributor[4]), Float.parseFloat(distributor[5]));
+									temp = true;
 									break;
 								}
+							}
+							if(!temp){
+								addPlayer(distributor[2], InetAddress.getByName(distributor[3]),
+										Float.parseFloat(distributor[4]), Float.parseFloat(distributor[5]));
+								players.get(players.size()-1).setInterpolatation(Float.parseFloat(distributor[5]),
+										Float.parseFloat(distributor[6]));
 							}
 						}
 					} catch (NumberFormatException | UnknownHostException e) {
@@ -591,6 +608,7 @@ public class World {
 					for (Players p : players) {
 						if (p.getID().equals(distributor[2])) {
 							p.setDirection(Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]), this);
+							p.setInterpolatation(Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
 							break;
 						}
 					}
@@ -599,6 +617,7 @@ public class World {
 					for (Enemy e : enemys) {
 						if (e.getID().equals(distributor[2])) {
 							e.setDirection(Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]));
+							e.setInterpolatation(Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
 							break;
 						}
 					}
@@ -614,7 +633,7 @@ public class World {
 						temp = true;
 					}
 				}
-				if(!temp){
+				if (!temp) {
 					addSkill(distributor[1], Float.parseFloat(distributor[2]), Float.parseFloat(distributor[3]),
 							distributor[4], Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
 				}
@@ -851,10 +870,9 @@ public class World {
 		skillIDcounter++;
 		activeSkills.add(s);
 		if (online && serverWorld) {
-			sendBuffer
-					.add(new String("attack/" +skillIDcounter + ":"+s.getID()+":"+skillIDcounter + "/" 
-							+ s.getTransform().pos.x + "/" + s.getTransform().pos.y
-							+ "/" + s.getInvokerID() + "/" + s.getDirection().x + "/" + s.getDirection().y + "/"));
+			sendBuffer.add(new String("attack/" + skillIDcounter + ":" + s.getID() + ":" + skillIDcounter + "/"
+					+ s.getTransform().pos.x + "/" + s.getTransform().pos.y + "/" + s.getInvokerID() + "/"
+					+ s.getDirection().x + "/" + s.getDirection().y + "/"));
 		}
 	}
 
@@ -863,8 +881,8 @@ public class World {
 		Skill s = new Skill(id, x, y, this, invokerID, directionX, directionY, true);
 		activeSkills.add(s);
 		if (online && serverWorld) {
-			sendBuffer.add(new String("attack/" + skillIDcounter + ":"+s.getID()+ "/" + x + "/" + y + "/"
-					+ invokerID + "/" + directionX + "/" + directionY + "/"));
+			sendBuffer.add(new String("attack/" + skillIDcounter + ":" + s.getID() + "/" + x + "/" + y + "/" + invokerID
+					+ "/" + directionX + "/" + directionY + "/"));
 		}
 	}
 

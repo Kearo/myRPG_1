@@ -29,7 +29,7 @@ public class Players {
 	protected long skillcd = 0;
 	protected float cd = 2f;
 	protected int worldX, worldY;
-	protected float speed = 0.1f; // 0.015f
+	protected float speed = 0.2f; // 0.2f
 	protected Transform transform;
 	private static Texture tex;
 	protected Vector2f direction;
@@ -42,6 +42,10 @@ public class Players {
 	protected boolean moved = false;
 	protected Skill[] skillBar;
 	protected World world;
+	protected Vector2f serverPos_interpolation;
+	protected boolean interpolation = false;
+	protected int walkCounter = 0;
+	protected float walkCounterAddX, walkCounterAddY;
 
 	public static void initTex() {
 		tex = new Texture("player/" + "sword1_diagonal.png");
@@ -56,6 +60,7 @@ public class Players {
 		this.ip = ip;
 		this.serverSide = serverSide;
 		this.world = world;
+		serverPos_interpolation = new Vector2f(0, 0);
 		initPlayer();
 	}
 
@@ -72,7 +77,7 @@ public class Players {
 				direction.x = 0;
 				direction.y = 0;
 				world.addToBuffer(new String("move/player/" + id + "/" + direction.x + "/" + direction.y + "/"
-						+ transform.pos.x + "/" + transform.pos.y +"/"));
+						+ transform.pos.x + "/" + transform.pos.y + "/"));
 			}
 
 		} else {
@@ -116,11 +121,12 @@ public class Players {
 	public void useSkill(World world, int skillBarNumber, float dx, float dy) {
 		world.addSkill(skillBar[skillBarNumber].getID(), transform.pos.x, transform.pos.y, id, dx, dy);
 	}
-	
-	public void useSkill(World world, Skill s){//later form skillCreation
-//		Skill s = new Skill(transform.pos.x, transform.pos.y, world, skillBar[skillBarNumber].getID(), serverSide);
-//		s.setDirection(dx, dy);
-//		world.addSkill(s);
+
+	public void useSkill(World world, Skill s) {// later form skillCreation
+		// Skill s = new Skill(transform.pos.x, transform.pos.y, world,
+		// skillBar[skillBarNumber].getID(), serverSide);
+		// s.setDirection(dx, dy);
+		// world.addSkill(s);
 	}
 
 	public void dmg(int dmg) {
@@ -133,7 +139,35 @@ public class Players {
 		} else {
 			moved = false;
 		}
-		transform.pos.add(new Vector3f(direction, 0));
+		if (world.getOnline() && !serverSide) {
+			if (interpolation) {
+				float x = transform.pos.x - serverPos_interpolation.x;
+				float y = transform.pos.y - serverPos_interpolation.y;
+				if (x > 0.5f || y > 0.5f) {
+					System.out.println("tes" + transform.pos.x + "  " + transform.pos.y);
+					transform.pos.x = serverPos_interpolation.x;
+					transform.pos.y = serverPos_interpolation.y;
+				} else {
+					if (walkCounter == 0) {
+						walkCounterAddX = x / 4;
+						walkCounterAddY = y / 4;
+					}else{
+						walkCounterAddX = (walkCounterAddX * walkCounter + x) / 4;
+						walkCounterAddY = (walkCounterAddY * walkCounter + y) / 4;
+					}
+					walkCounter = 4;
+				}
+				interpolation = false;
+			}
+		} else {
+			if (walkCounter > 0) {
+				transform.pos.add(new Vector3f(walkCounterAddX, walkCounterAddY, 0));
+				walkCounter--;
+			}
+		}
+		if (moved) {
+			transform.pos.add(new Vector3f(direction, 0));
+		}
 	}
 
 	public void setDirection(float dx, float dy, World world) {
@@ -152,6 +186,11 @@ public class Players {
 			tex.bind(0);
 			Assets.getModel().render();
 		}
+	}
+
+	public void setInterpolatation(float x, float y) {
+		serverPos_interpolation.set(x, y);
+		interpolation = true;
 	}
 
 	public Transform getTransform() {

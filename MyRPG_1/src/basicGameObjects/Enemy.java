@@ -55,6 +55,7 @@ public class Enemy {
 	protected boolean onlineMode;
 	protected boolean serverSide;
 	protected boolean moved = false;
+	protected Vector2f serverPos_interpolation = new Vector2f(0, 0);
 
 	public static void initTex() {
 		tex = new Texture("monsters/" + "enemy_test.png");
@@ -83,16 +84,12 @@ public class Enemy {
 	}
 
 	private void onlineMode() {
-		
-		
-		
-		
-		
+
 	}
 
 	private void offlineMode() {
 		if (!inCombat && !death) {
-			move();
+			moveOffline();
 		} else {
 			if (!death) {
 				chase();
@@ -262,9 +259,9 @@ public class Enemy {
 
 	protected void move() {
 		if (moveTicker > 0) {
-			if(move.x != 0 || move.y != 0){
+			if (move.x != 0 || move.y != 0) {
 				moved = true;
-			}else{
+			} else {
 				moved = false;
 			}
 			if (!checkCollision(move.x, move.y, world)) {
@@ -293,9 +290,36 @@ public class Enemy {
 			if (stopTicker > 0)
 				stopTicker--;
 			else {
-				Random rand = new Random();
-				int i = rand.nextInt(4);
-				initMovement(i);
+				initMovement();
+			}
+		}
+	}
+
+	protected void moveOffline() {
+		if (moveTicker > 0) {
+			if (move.x != 0 || move.y != 0) {
+				moved = true;
+			} else {
+				moved = false;
+			}
+			if (!checkCollision(move.x, move.y, world)) {
+				transform.pos.add(new Vector3f(move, 0));
+				moveTicker--;
+				if (moveTicker == 0) {
+					stopTicker = stopTickertime;
+				}
+			} else {
+				moveTicker--;
+				if (moveTicker == 0) {
+					stopTicker = stopTickertime;
+				}
+			}
+		} else {
+			move.set(0, 0);
+			if (stopTicker > 0)
+				stopTicker--;
+			else {
+				initMovement();
 			}
 		}
 	}
@@ -350,8 +374,10 @@ public class Enemy {
 		move.y = dy;
 	}
 
-	public void initMovement(int direction) {
+	public void initMovement() {
 		if (!haveAggro) {
+			Random rand = new Random();
+			int direction = rand.nextInt(4);
 			moveTicker = moveTime;
 			if (direction == 0 && transform.pos.x < worldX * 2 - 2) {// right
 				move.add(speed, 0);
@@ -431,13 +457,17 @@ public class Enemy {
 	public void setsendInfo() {
 		sendInfo = false;
 	}
-	
-	public boolean getMoved(){
+
+	public boolean getMoved() {
 		return moved;
 	}
-	
-	public void setMoved(){
+
+	public void setMoved() {
 		moved = false;
+	}
+
+	public void setInterpolatation(float x, float y) {
+		serverPos_interpolation.set(x, y);
 	}
 
 	public void render(Shader shader, Camera camera, World world) {
