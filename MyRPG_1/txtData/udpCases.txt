@@ -21,3 +21,10 @@ case "disconnect": //ID/
 
 remember:
 enemy = monster
+
+
+
+ports:
+tcpClient/server 8889
+udpServer 8888
+udpClient 8887

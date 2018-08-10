@@ -13,7 +13,7 @@ public class Gui{
 	private int fps = 0;
 	private	Camera camera;
 	private static TileSheet sheet;
-	private static boolean init = false;
+	private static boolean init = true;
 	private float width;
 	private float height;
 	private float scale = 64;	
@@ -41,7 +41,7 @@ public class Gui{
 	}
 	
 	public void render(Shader shader){	
-		drawString(width, height, fps);
+		//drawString(width, height, fps);
 		
 		Matrix4f mat = new Matrix4f();
 		camera.getProjection().scale(32, mat);

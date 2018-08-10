@@ -7,7 +7,9 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -38,6 +40,9 @@ public class World {
 	private List<Skill> activeSkills;
 	private List<String> input;
 	private List<Integer> remover;
+	private Map<String, Players> playersMap;
+	private Map<String, Enemy> enemyMap;
+	private Map<String, Skill> skillMap;
 	private byte[] tiles;
 	private Transform transform;
 	private Matrix4f world;
@@ -84,6 +89,9 @@ public class World {
 			players = new ArrayList<Players>();
 			input = new ArrayList<String>();
 			remover = new ArrayList<Integer>();
+			playersMap = new HashMap<String, Players>();
+			enemyMap = new HashMap<String, Enemy>();
+			skillMap = new HashMap<String, Skill>();
 
 			this.world = new Matrix4f().setTranslation(new Vector3f(0));
 			this.world.scale(scale);
@@ -145,6 +153,9 @@ public class World {
 		players = new ArrayList<Players>();
 		input = new ArrayList<String>();
 		remover = new ArrayList<Integer>();
+		playersMap = new HashMap<String, Players>();
+		enemyMap = new HashMap<String, Enemy>();
+		skillMap = new HashMap<String, Skill>();
 
 		this.world = new Matrix4f().setTranslation(new Vector3f(0));
 		this.world.scale(scale);
@@ -198,6 +209,9 @@ public class World {
 		players = new ArrayList<Players>();
 		input = new ArrayList<String>();
 		remover = new ArrayList<Integer>();
+		playersMap = new HashMap<String, Players>();
+		enemyMap = new HashMap<String, Enemy>();
+		skillMap = new HashMap<String, Skill>();
 
 		addresses = new ArrayList<InetAddress>();
 		sendBuffer = new ArrayList<String>();
@@ -294,13 +308,14 @@ public class World {
 			}
 		}
 		for (int i = remover.size() - 1; i >= 0; i--) {
+			enemyMap.remove(enemys.get(i).getID());
 			enemys.remove(i);
 		}
 		remover.clear();
 
 		if (serverWorld) {
 			if (globalEnemyCounter < maxMopsOnMap && respawnTimer <= 0) {
-				// addEnemy();
+				addEnemy();
 				if (globalEnemyCounter < maxMopsOnMap / 3) {
 					respawnTimer = fastMopRespawnTimer;
 				} else {
@@ -318,17 +333,20 @@ public class World {
 			}
 		}
 		for (int i = remover.size() - 1; i >= 0; i--) {
+			playersMap.remove(playersMap.get(i).getID());
 			players.remove(i);
 		}
 		remover.clear();
 
 		for (Skill s : activeSkills) {
 			s.update();
+			System.out.println(s.getTransform().pos.x);
 			if (s.getDelete()) {
 				remover.add(activeSkills.indexOf(s));
 			}
 		}
 		for (int i = remover.size() - 1; i >= 0; i--) {
+			skillMap.remove(activeSkills.get(i).getID());
 			activeSkills.remove(i);
 		}
 		remover.clear();
@@ -381,10 +399,10 @@ public class World {
 							sx = Float.parseFloat(q[2]);
 							sy = Float.parseFloat(q[3]);
 							break;
-						 case "hit": // (monster/player/skill)/ID/InvokerID/attackID/posX/posY/
+						case "hit": // (monster/player/skill)/ID/InvokerID/attackID/posX/posY/
 							sx = Integer.parseInt(q[5]);
-						 	sy = Integer.parseInt(q[6]);
-						 break;
+							sy = Integer.parseInt(q[6]);
+							break;
 						case "despawn": // (monster/player)/ID/poX/posY/
 							sx = Integer.parseInt(q[3]);
 							sy = Integer.parseInt(q[4]);
@@ -512,6 +530,9 @@ public class World {
 
 	public void manageUDPInput(String input) {
 		System.out.println(input);
+		Players p;
+		Enemy e;
+		Skill s;
 		String[] distributor = input.split("/");
 		if (serverWorld) {
 			switch (distributor[0]) {
@@ -523,163 +544,90 @@ public class World {
 					e1.printStackTrace();
 					ErrorLog.writeError("world_input_login", e1);
 				}
-				for (Players p : players) {
-					if (p.getID().equals(distributor[1])) {
-						connect(p);
-						break;
-					}
-				}
+				p = playersMap.get(distributor[1]);
+				connect(p);
+
 				break;
 			case "move": // ID/directionX/directionY/
-				for (Players p : players) {
-					if (p.getID().equals(distributor[1])) {
-						p.setDirection(Float.parseFloat(distributor[2]), Float.parseFloat(distributor[3]), this);
-						sendBuffer.add(
-								new String("move/player/" + p.getID() + "/" + distributor[2] + "/" + distributor[3])
-										+ "/" + p.getTransform().pos.x + "/" + p.getTransform().pos.y + "/");
-						break;
-					}
-				}
+				p = playersMap.get(distributor[1]);
+				p.setDirection(Float.parseFloat(distributor[2]), Float.parseFloat(distributor[3]), this);
+				sendBuffer.add(new String("move/player/" + p.getID() + "/" + distributor[2] + "/" + distributor[3])
+						+ "/" + p.getTransform().pos.x + "/" + p.getTransform().pos.y + "/");
 				break;
 			case "turn": // ID/turnDegree/
 				break;
 			case "attack": // ID/SkillbarNumber/directionX/directionY/InvokerID/
-				for (Players p : players) {
-					if (p.getID().equals(distributor[5])) {
-						p.useSkill(this, Integer.parseInt(distributor[2]), Float.parseFloat(distributor[3]),
-								Float.parseFloat(distributor[4]));
-					}
-				}
+				p = playersMap.get(distributor[5]);
+				p.useSkill(this, Integer.parseInt(distributor[2]), Float.parseFloat(distributor[3]),
+						Float.parseFloat(distributor[4]));
 				break;
 			case "disconnect": // ID/
-				for (Players p : players) {
-					if (p.getID().equals(distributor[1])) {
-						p.setDelete();
-						break;
-					}
-				}
+				p = playersMap.get(distributor[5]);
+				p.setDelete();
 				break;
 			}
 		} else {
 			switch (distributor[0]) {
 			case "spawn": // (monster/player)/ID/InetAdress/posX/posY/
-				// Inet not by mosnter
+				// monster/id/posX/posY
 				// statsLAter
 				if (distributor[1].equals("monster")) {
-					boolean temp = false;
-					for (Enemy e : enemys) {
-						if (e.getID().equals(distributor[2])) {
-							temp = true;
-							break;
-						}
-					}
-					if (!temp) {
+					if (!enemyMap.containsKey(distributor[2])) {
 						addEnemy(distributor[2], Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]));
-						enemys.get(enemys.size()-1).setInterpolatation(Float.parseFloat(distributor[5]), 
-								Float.parseFloat(distributor[6]));
+						enemys.get(enemys.size() - 1).setInterpolatation(Float.parseFloat(distributor[3]),
+								Float.parseFloat(distributor[4]));
 					}
 				}
 				if (distributor[1].equals("player")) {
 					try {
 						if (!mainPlayer.getID().equals(distributor[2])) {
-							boolean temp = false;
-							for (Players p : players) {
-								if (p.getID().equals(distributor[2])) {
-									temp = true;
-									break;
-								}
-							}
-							if(!temp){
+							if (!playersMap.containsKey(distributor[2])) {
 								addPlayer(distributor[2], InetAddress.getByName(distributor[3]),
 										Float.parseFloat(distributor[4]), Float.parseFloat(distributor[5]));
-								players.get(players.size()-1).setInterpolatation(Float.parseFloat(distributor[5]),
-										Float.parseFloat(distributor[6]));
+								players.get(players.size() - 1).setInterpolatation(Float.parseFloat(distributor[4]),
+										Float.parseFloat(distributor[5]));
 							}
 						}
-					} catch (NumberFormatException | UnknownHostException e) {
-						e.printStackTrace();
-						ErrorLog.writeError("world_spawn", e);
+					} catch (NumberFormatException | UnknownHostException e1) {
+						e1.printStackTrace();
+						ErrorLog.writeError("world_spawn", e1);
 					}
 				}
 				break;
 			case "move": // (monster/player)/ID/directionX/directionY/posX/posY/
 				if (distributor[1].equals("player")) {
-					for (Players p : players) {
-						if (p.getID().equals(distributor[2])) {
-							p.setDirection(Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]), this);
-							p.setInterpolatation(Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
-							break;
-						}
-					}
+					p = playersMap.get(distributor[2]);
+					p.setDirection(Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]), this);
+					p.setInterpolatation(Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
 				}
 				if (distributor[1].equals("monster")) {
-					for (Enemy e : enemys) {
-						if (e.getID().equals(distributor[2])) {
-							e.setDirection(Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]));
-							e.setInterpolatation(Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
-							break;
-						}
-					}
+					e = enemyMap.get(distributor[2]);
+					e.setDirection(Float.parseFloat(distributor[3]), Float.parseFloat(distributor[4]));
+					e.setInterpolatation(Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
 				}
 				break;
 			case "turn": // (monster/player)/ID/turnDegree/posX/posY/
 				// coming soon
 				break;
 			case "attack": // ID/posX/posY/invokerID/directionX/directionY/
-				boolean temp = false;
-				for (Skill s : activeSkills) {
-					if (s.getID().equals(distributor[1])) {
-						temp = true;
-					}
-				}
-				if (!temp) {
+				if (!skillMap.containsKey(distributor[1])) {
 					addSkill(distributor[1], Float.parseFloat(distributor[2]), Float.parseFloat(distributor[3]),
 							distributor[4], Float.parseFloat(distributor[5]), Float.parseFloat(distributor[6]));
 				}
 				break;
-			case "hit": // (monster/player/skill)/ID/InvokerID/posX/posY/
-//				if (distributor[1].equals("player")) {
-//					for (Players p : players) {
-//						if (p.getID().equals(distributor[2])) {
-//							p.hit(distributor[4], distributor[3]);
-//							break;
-//						}
-//					}
-//				}
-//				if (distributor[1].equals("monster")) {
-//					for (Enemy e : enemys) {
-//						if (e.getID().equals(distributor[2])) {
-//							e.hit(distributor[4], distributor[3]);
-//							break;
-//						}
-//					}
-//				}
-				//if (distributor[1].equals("skill")) {
-					for (Skill s : activeSkills) {
-						if (s.getID().equals(distributor[2])) {
-							s.hit(distributor[2], distributor[3], Float.parseFloat(distributor[4]),
-									Float.parseFloat(distributor[5]), distributor[1]);
-							break;
-						}
-					}
-				//}
+			case "hit":
+				s = skillMap.get(distributor[2]);
+				s.hit(distributor[2], distributor[3], Float.parseFloat(distributor[4]),
+						Float.parseFloat(distributor[5]), distributor[1]);
 				break;
 			case "despawn": // (monster/player)/ID/poX/posY/
 				if (distributor[1].equals("player")) {
-					for (Players p : players) {
-						if (p.getID().equals(distributor[2])) {
-							p.setDelete();
-							break;
-						}
-					}
+					p = playersMap.get(distributor[2]);
+					p.setDelete();
 				}
 				if (distributor[1].equals("monster")) {
-					for (Enemy e : enemys) {
-						if (e.getID().equals(distributor[2])) {
-							e.setDelete();
-							break;
-						}
-					}
+					e = enemyMap.get(distributor[2]);
+					e.setDelete();
 				}
 				break;
 
@@ -730,7 +678,7 @@ public class World {
 						destinationIP = destinationIP.replace("/", "");
 					}
 					ip = InetAddress.getByName(destinationIP);
-					DatagramPacket packet = new DatagramPacket(data, data.length, ip, 7777);
+					DatagramPacket packet = new DatagramPacket(data, data.length, ip, 8887);
 					gsw.sendOnput(packet);
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
@@ -740,7 +688,7 @@ public class World {
 		} else {
 			for (int i = 0; i < players.size(); i++) {
 				// System.out.println(players.get(i).getIp());
-				DatagramPacket packet = new DatagramPacket(data, data.length, players.get(i).getIp(), 7777);
+				DatagramPacket packet = new DatagramPacket(data, data.length, players.get(i).getIp(), 8887);
 				gsw.sendOnput(packet);
 			}
 		}
@@ -877,6 +825,7 @@ public class World {
 	public void addSkill(Skill s) {
 		skillIDcounter++;
 		activeSkills.add(s);
+		skillMap.put(s.getID(), s);
 		if (online && serverWorld) {
 			sendBuffer.add(new String("attack/" + skillIDcounter + ":" + s.getID() + ":" + skillIDcounter + "/"
 					+ s.getTransform().pos.x + "/" + s.getTransform().pos.y + "/" + s.getInvokerID() + "/"
@@ -888,6 +837,7 @@ public class World {
 		skillIDcounter++;
 		Skill s = new Skill(id, x, y, this, invokerID, directionX, directionY, true);
 		activeSkills.add(s);
+		skillMap.put(id, s);
 		if (online && serverWorld) {
 			sendBuffer.add(new String("attack/" + skillIDcounter + ":" + s.getID() + "/" + x + "/" + y + "/" + invokerID
 					+ "/" + directionX + "/" + directionY + "/"));
@@ -897,6 +847,7 @@ public class World {
 	public void addPlayer(String id, InetAddress ip, float x, float y) {
 		Players p = new Players(id, x, y, ip, true, this);
 		players.add(p);
+		playersMap.put(id, p);
 		if (online && serverWorld) {
 			sendBuffer.add("spawn/player/" + id + "/" + ip + "/" + x + "/" + y + "/");
 		}
@@ -920,9 +871,10 @@ public class World {
 			}
 		}
 		mainPlayer = new Mainplayer(this, id, i1 * 2, i2 * 2);
-		players.add(mainPlayer);
 		camera.getPosition().set(transform.pos.mul(-scale, new Vector3f()));
 		if (online) {
+			players.add(mainPlayer);
+			playersMap.put(id, mainPlayer);
 			manageUDPOutput(new String("login/" + id + "/" + address + "/" + i1 * 2 + "/" + i2 * 2 + "/"), "server");
 		}
 	}
@@ -941,6 +893,7 @@ public class World {
 			String id = "enemy" + mopIDcounter;
 			Enemy e = new Enemy(this, x * 2, y * 2, id, serverWorld);
 			enemys.add(e);
+			enemyMap.put(e.getID(), e);
 			globalEnemyCounter++;
 			mopIDcounter++;
 			if (online && serverWorld) {
@@ -952,6 +905,7 @@ public class World {
 	public void addEnemy(String id, float x, float y) {
 		Enemy e = new Enemy(this, x, y, id, serverWorld);
 		enemys.add(e);
+		enemyMap.put(e.getID(), e);
 	}
 
 	public static void initTex() {
@@ -963,6 +917,7 @@ public class World {
 
 	public void removePlayer(Players p) {
 		players.remove(p);
+		playersMap.remove(p.getID(), p);
 	}
 
 	public List<Skill> getSkillList() {

@@ -54,7 +54,7 @@ public class GameLogicManager implements Runnable{
 	}	
 	
 	public static void initOnline(InetAddress worldIP, String worldName ){
-		udp = new UDPClient(address, 7777);
+		udp = new UDPClient(address, 8887);
 		world = new World(GameManager.getWindow().getWidth(), GameManager.getWindow().getHeight(), worldName, worldIP);	
 		world.calculateView(GameManager.getWindow());
 		world.addMainPlayer(playerName, address);

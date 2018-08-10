@@ -56,9 +56,11 @@ public class Enemy {
 	protected boolean serverSide;
 	protected boolean moved = false;
 	protected Vector2f serverPos_interpolation = new Vector2f(0, 0);
-	
+
+	protected boolean interpolation = false;
 	protected int walkCounter = 0;
 	protected float walkCounterAddX, walkCounterAddY;
+	protected Players chaseTarget;
 
 	public static void initTex() {
 		tex = new Texture("monsters/" + "enemy_test.png");
@@ -87,7 +89,33 @@ public class Enemy {
 	}
 
 	private void onlineMode() {
-
+		if (!inCombat && !death) {
+			move();
+		} else {
+			if (!death) {
+				if (inCombat) {
+					chase(chaseTarget);
+					attack();
+				}else{
+					if(aggressiv){
+						chaseTarget = checkForPlayers();
+						if(chaseTarget != null){
+							inCombat = true;
+						}
+					}
+				}
+			} else {
+				if (lootGenerated) {
+					long l = System.nanoTime();
+					l = (l - deathTimer) / 1000000000;
+					if (l >= secondsAfterDeathToRemove) {
+						delete = true;
+					}
+				} else {
+					generateLoot();
+				}
+			}
+		}
 	}
 
 	private void offlineMode() {
@@ -95,7 +123,7 @@ public class Enemy {
 			moveOffline();
 		} else {
 			if (!death) {
-				chase();
+				chase(chaseTarget);
 				attack();
 			} else {
 				if (lootGenerated) {
@@ -261,40 +289,64 @@ public class Enemy {
 	}
 
 	protected void move() {
-		if (moveTicker > 0) {
-			if (move.x != 0 || move.y != 0) {
-				moved = true;
-			} else {
-				moved = false;
-			}
-			if (!checkCollision(move.x, move.y, world)) {
-				transform.pos.add(new Vector3f(move, 0));
-				moveTicker--;
-				if (moveTicker == 0) {
-					stopTicker = stopTickertime;
+		if(world.getServerWorld()){
+			if (moveTicker > 0) {
+				if (move.x != 0 || move.y != 0) {
+					moved = true;
+				} else {
+					moved = false;
 				}
-			} else {
-				if (world.getServerWorld()) {
-					move = new Vector2f(0, 0);
-					world.manageUDPOutput(new String("move/monster/" + id + "/" + move.x + "/" + move.y + "/"),
-							"clients");
+				if (!checkCollision(move.x, move.y, world)) {
+					transform.pos.add(new Vector3f(move, 0));
+					moveTicker--;
+					if (moveTicker == 0) {
+						stopTicker = stopTickertime;
+					}
 				} else {
 					moveTicker--;
 					if (moveTicker == 0) {
 						stopTicker = stopTickertime;
 					}
 				}
+			} else {
+				move.set(0, 0);
+				world.addToBuffer("move/monster/"+ id +"/"+ move.x + "/"+ move.y + "/"+ transform.pos.x + "/"+ 
+				transform.pos.y+ "/");
+				if (stopTicker > 0)
+					stopTicker--;
+				else {
+					initMovement();
+				}
 			}
-		} else {
-			move.set(0, 0);
-			if (world.getServerWorld()) {
-				world.manageUDPOutput(new String("move/monster/" + id + "/" + move.x + "/" + move.y + "/"), "clients");
+		}else{
+			if (interpolation) {
+				float x = serverPos_interpolation.x - transform.pos.x;
+				float y = serverPos_interpolation.y - transform.pos.y;
+				if (Math.abs(x) > 0.5f || Math.abs(y) > 0.5f) {
+					System.out.println("tes" + transform.pos.x + "  " + transform.pos.y);
+					transform.pos.x = serverPos_interpolation.x;
+					transform.pos.y = serverPos_interpolation.y;
+				} else {
+					if (x != 0 || y != 0) {
+						if (walkCounter == 0) {
+							walkCounterAddX = x / 10;
+							walkCounterAddY = y / 10;
+						} else {
+							walkCounterAddX = (walkCounterAddX * walkCounter + x) / 10;
+							walkCounterAddY = (walkCounterAddY * walkCounter + y) / 10;
+						}
+						walkCounter = 10;
+					}
+				}
+				interpolation = false;
+			} else {
+				if (walkCounter > 0) {
+					transform.pos.add(new Vector3f(walkCounterAddX, walkCounterAddY, 0));
+					walkCounter--;
+					System.out.println(transform.pos.x + "  " +transform.pos.y);
+				}
 			}
-			if (stopTicker > 0)
-				stopTicker--;
-			else {
-				initMovement();
-			}
+			transform.pos.add(new Vector3f(move, 0));
 		}
 	}
 
@@ -327,7 +379,7 @@ public class Enemy {
 		}
 	}
 
-	protected void chase() {
+	protected void chase(Players target) {
 
 	}
 
@@ -352,7 +404,7 @@ public class Enemy {
 		death();
 	}
 
-	private void checkForPlayers() {
+	private Players checkForPlayers() {
 		plist = world.getPlayersList();
 		float posX = transform.pos.x + transform.scale.x;
 		float posY = transform.pos.y - transform.scale.y;
@@ -364,12 +416,12 @@ public class Enemy {
 			px = posX - px;
 			py = posY - py;
 			if (px >= chaseRange && py <= chaseRange) {
-				chase();
 				inCombat = true;
-				return;
+				return plist.get(i);
 			}
 		}
 		inCombat = false;
+		return null;
 	}
 
 	public void setDirection(float dx, float dy) {
@@ -395,7 +447,9 @@ public class Enemy {
 				move.add(0, speed);
 			}
 			if (world.getOnline()) {
-				world.manageUDPOutput(new String("move/monster/" + id + "/" + move.x + "/" + move.y + "/"), "clients");
+				world.addToBuffer("move/monster/"+ id +"/"+ move.x + "/"+ move.y + "/"+ transform.pos.x + "/"+ 
+				transform.pos.y+ "/");
+			//	world.manageUDPOutput(new String("move/monster/" + id + "/" + move.x + "/" + move.y + "/"), "clients");
 			}
 		}
 
@@ -471,6 +525,7 @@ public class Enemy {
 
 	public void setInterpolatation(float x, float y) {
 		serverPos_interpolation.set(x, y);
+		interpolation = true;
 	}
 
 	public void render(Shader shader, Camera camera, World world) {

@@ -141,28 +141,31 @@ public class Players {
 		}
 		if (world.getOnline() && !serverSide) {
 			if (interpolation) {
-				float x = transform.pos.x - serverPos_interpolation.x;
-				float y = transform.pos.y - serverPos_interpolation.y;
-				if (x > 0.5f || y > 0.5f) {
+				float x = serverPos_interpolation.x - transform.pos.x;
+				float y = serverPos_interpolation.y - transform.pos.y;
+				if (Math.abs(x) > 0.5f || Math.abs(y) > 0.5f) {
 					System.out.println("tes" + transform.pos.x + "  " + transform.pos.y);
 					transform.pos.x = serverPos_interpolation.x;
 					transform.pos.y = serverPos_interpolation.y;
 				} else {
-					if (walkCounter == 0) {
-						walkCounterAddX = x / 4;
-						walkCounterAddY = y / 4;
-					}else{
-						walkCounterAddX = (walkCounterAddX * walkCounter + x) / 4;
-						walkCounterAddY = (walkCounterAddY * walkCounter + y) / 4;
+					if (x != 0 || y != 0) {
+						if (walkCounter == 0) {
+							walkCounterAddX = x / 10;
+							walkCounterAddY = y / 10;
+						} else {
+							walkCounterAddX = (walkCounterAddX * walkCounter + x) / 10;
+							walkCounterAddY = (walkCounterAddY * walkCounter + y) / 10;
+						}
+						walkCounter = 10;
 					}
-					walkCounter = 4;
 				}
 				interpolation = false;
-			}
-		} else {
-			if (walkCounter > 0) {
-				transform.pos.add(new Vector3f(walkCounterAddX, walkCounterAddY, 0));
-				walkCounter--;
+			} else {
+				if (walkCounter > 0) {
+					transform.pos.add(new Vector3f(walkCounterAddX, walkCounterAddY, 0));
+					walkCounter--;
+					System.out.println(transform.pos.x + "  " +transform.pos.y);
+				}
 			}
 		}
 		if (moved) {

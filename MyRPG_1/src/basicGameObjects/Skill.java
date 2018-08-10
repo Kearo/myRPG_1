@@ -43,6 +43,8 @@ public class Skill {
 	protected boolean eventAtDestination = false;
 	protected Vector2f serverPos_interpolation = new Vector2f(0, 0);
 	protected int power = 5;
+	protected int walkCounter = 0;
+	protected float walkCounterAddX, walkCounterAddY;
 
 	public static void initTex() {
 		tex = new Texture("skills/" + "test_skill.png");
@@ -92,6 +94,11 @@ public class Skill {
 			move();
 			if (world.getServerWorld()) {
 				// checkCollision();
+			}
+			if(walkCounter > 0){
+				transform.pos.add(new Vector3f(walkCounterAddX, walkCounterAddY, 0));
+				walkCounter--;
+				System.out.println(transform.pos.x + "  " +transform.pos.y);
 			}
 		}
 	}
@@ -183,10 +190,21 @@ public class Skill {
 			AudioManager.playSoundEffect(audio, transform.pos.x, transform.pos.y, 0);
 			float ex = transform.pos.x - x;
 			float ey = transform.pos.y - y;
-			if (ex > transform.pos.x || ey > transform.pos.y) {
+			if (Math.abs(ex) > 0.5f || Math.abs(ey) > 0.5f) {
 				System.out.println("tesSkill" + transform.pos.x + "  " + transform.pos.y);
 				transform.pos.x = x;
 				transform.pos.y = y;
+			}else{
+				if (x != 0 || y != 0) {
+					if (walkCounter == 0) {
+						walkCounterAddX = x / 10;
+						walkCounterAddY = y / 10;
+					} else {
+						walkCounterAddX = (walkCounterAddX * walkCounter + x) / 10;
+						walkCounterAddY = (walkCounterAddY * walkCounter + y) / 10;
+					}
+					walkCounter = 10;
+				}
 			}
 		} else {
 			world.addToBuffer(type + "/" + id + "/" + invokerID + "/" + x + "/" + y + "/");
