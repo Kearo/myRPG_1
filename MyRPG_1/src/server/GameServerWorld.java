@@ -54,7 +54,7 @@ public class GameServerWorld implements Runnable{
 		if(threadPause){
 			wakeUpThread();
 		}
-		world.manageUDPInput(input);
+		world.addInput(input);
 	}
 
 	public void sendOnput(DatagramPacket packet){

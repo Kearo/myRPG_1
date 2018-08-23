@@ -1,4 +1,6 @@
-package basicGameObjects;
+package playerObjects;
+
+import basicGameObjects.Item;
 
 public class Inventory {
 	private Item[] inven;

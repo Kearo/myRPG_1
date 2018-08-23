@@ -14,7 +14,7 @@ import world.World;
 
 public class GameLogicManager implements Runnable{
 	private static boolean running = false;
-	private static boolean online = true;
+	private static boolean online = false;
 	private static World world;
 	private static UDPClient udp;
 	private static TCPClient tcp;

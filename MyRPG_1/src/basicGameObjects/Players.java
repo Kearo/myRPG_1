@@ -14,7 +14,7 @@ import render.Texture;
 import render.Transform;
 import world.World;
 
-public class Players {
+public class Players extends BasisObject{
 
 	// private String name;
 	// private int level;
@@ -30,9 +30,7 @@ public class Players {
 	protected float cd = 2f;
 	protected int worldX, worldY;
 	protected float speed = 0.2f; // 0.2f
-	protected Transform transform;
 	private static Texture tex;
-	protected Vector2f direction;
 	protected boolean delete = false;
 	protected boolean gotHit = false;
 	protected String hitID;
@@ -41,7 +39,6 @@ public class Players {
 	protected boolean serverSide;
 	protected boolean moved = false;
 	protected Skill[] skillBar;
-	protected World world;
 	protected Vector2f serverPos_interpolation;
 	protected boolean interpolation = false;
 	protected int walkCounter = 0;
@@ -71,8 +68,11 @@ public class Players {
 
 	public void update() {
 		if (serverSide) {
-			if (!Collision.checkCollisionPlayers(this, world)) {
-				move();
+			if (!Collision.checkCollisionMap(this)) {
+				Object o = Collision.checkCollisionMopsAndPlayers(this);
+				if(o == null){
+					move();
+				}	
 			} else {
 				direction.x = 0;
 				direction.y = 0;
@@ -164,7 +164,7 @@ public class Players {
 				if (walkCounter > 0) {
 					transform.pos.add(new Vector3f(walkCounterAddX, walkCounterAddY, 0));
 					walkCounter--;
-					System.out.println(transform.pos.x + "  " +transform.pos.y);
+					System.out.println("8888" + transform.pos.x + "  " +transform.pos.y);
 				}
 			}
 		}
@@ -194,14 +194,6 @@ public class Players {
 	public void setInterpolatation(float x, float y) {
 		serverPos_interpolation.set(x, y);
 		interpolation = true;
-	}
-
-	public Transform getTransform() {
-		return transform;
-	}
-
-	public Vector2f getDirection() {
-		return direction;
 	}
 
 	public String getID() {

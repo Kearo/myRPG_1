@@ -15,6 +15,10 @@ public class Assets {
 				1, 1, 0, //top right				1
 				1, -1, 0,	//bottom right 			2		
 				-1, -1, 0,	//bottom left			3
+//				0, 0, 0, //top left				0
+//				1, 0, 0, //top right				1
+//				1, -1, 0,	//bottom right 			2		
+//				0, -1, 0,	//bottom left			3
 		};
 		
 		float[] texture = new float[]{
@@ -22,6 +26,10 @@ public class Assets {
 				1,0,
 				1,1,			
 				0,1,
+//				-1, 1,
+//				1, 1,
+//				1, -1,
+//				-1, -1,
 		};
 		
 		int[] indicies = new int[]{

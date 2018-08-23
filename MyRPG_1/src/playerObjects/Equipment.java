@@ -1,4 +1,6 @@
-package basicGameObjects;
+package playerObjects;
+
+import basicGameObjects.Item;
 
 public class Equipment {
 	private Item head;

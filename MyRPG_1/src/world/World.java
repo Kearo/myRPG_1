@@ -65,6 +65,7 @@ public class World {
 	// private boolean firstConnect = true;
 	private List<InetAddress> addresses;
 	private List<String> sendBuffer;
+	private List<String> inputBuffer;
 	private int sendRadius = 30;
 
 	public World(int winx, int winy, int z) { // offlineMode
@@ -156,6 +157,8 @@ public class World {
 		playersMap = new HashMap<String, Players>();
 		enemyMap = new HashMap<String, Enemy>();
 		skillMap = new HashMap<String, Skill>();
+		
+		inputBuffer = new ArrayList<String>();
 
 		this.world = new Matrix4f().setTranslation(new Vector3f(0));
 		this.world.scale(scale);
@@ -215,6 +218,7 @@ public class World {
 
 		addresses = new ArrayList<InetAddress>();
 		sendBuffer = new ArrayList<String>();
+		inputBuffer = new ArrayList<String>();
 
 		this.world = new Matrix4f().setTranslation(new Vector3f(0));
 		this.world.scale(scale);
@@ -300,6 +304,12 @@ public class World {
 	}
 
 	private void onlineMode() {
+		List<String> tempBuffer2 = new ArrayList<String>(inputBuffer);
+		inputBuffer.clear();
+		for(String s : tempBuffer2){
+			manageUDPInput(s);
+		}
+		
 		for (Enemy e : enemys) {
 			e.update();
 			if (e.getDelete()) {
@@ -315,7 +325,7 @@ public class World {
 
 		if (serverWorld) {
 			if (globalEnemyCounter < maxMopsOnMap && respawnTimer <= 0) {
-				addEnemy();
+		//		addEnemy();
 				if (globalEnemyCounter < maxMopsOnMap / 3) {
 					respawnTimer = fastMopRespawnTimer;
 				} else {
@@ -340,7 +350,7 @@ public class World {
 
 		for (Skill s : activeSkills) {
 			s.update();
-			System.out.println(s.getTransform().pos.x);
+			//System.out.println(s.getTransform().pos.x);
 			if (s.getDelete()) {
 				remover.add(activeSkills.indexOf(s));
 			}
@@ -400,12 +410,12 @@ public class World {
 							sy = Float.parseFloat(q[3]);
 							break;
 						case "hit": // (monster/player/skill)/ID/InvokerID/attackID/posX/posY/
-							sx = Integer.parseInt(q[5]);
-							sy = Integer.parseInt(q[6]);
+							sx = Float.parseFloat(q[4]);
+							sy = Float.parseFloat(q[5]);
 							break;
 						case "despawn": // (monster/player)/ID/poX/posY/
-							sx = Integer.parseInt(q[3]);
-							sy = Integer.parseInt(q[4]);
+							sx = Float.parseFloat(q[3]);
+							sy = Float.parseFloat(q[4]);
 							break;
 						}
 
@@ -617,7 +627,7 @@ public class World {
 				break;
 			case "hit":
 				s = skillMap.get(distributor[2]);
-				s.hit(distributor[2], distributor[3], Float.parseFloat(distributor[4]),
+				s.hit(distributor[3], Float.parseFloat(distributor[4]),
 						Float.parseFloat(distributor[5]), distributor[1]);
 				break;
 			case "despawn": // (monster/player)/ID/poX/posY/
@@ -827,7 +837,8 @@ public class World {
 		activeSkills.add(s);
 		skillMap.put(s.getID(), s);
 		if (online && serverWorld) {
-			sendBuffer.add(new String("attack/" + skillIDcounter + ":" + s.getID() + ":" + skillIDcounter + "/"
+			s.setID(skillIDcounter+ ":"+ s.getID());
+			sendBuffer.add(new String("attack/" + s.getID() + "/"
 					+ s.getTransform().pos.x + "/" + s.getTransform().pos.y + "/" + s.getInvokerID() + "/"
 					+ s.getDirection().x + "/" + s.getDirection().y + "/"));
 		}
@@ -839,7 +850,8 @@ public class World {
 		activeSkills.add(s);
 		skillMap.put(id, s);
 		if (online && serverWorld) {
-			sendBuffer.add(new String("attack/" + skillIDcounter + ":" + s.getID() + "/" + x + "/" + y + "/" + invokerID
+			s.setID(skillIDcounter+ ":"+ s.getID());
+			sendBuffer.add(new String("attack/" + s.getID() + "/" + x + "/" + y + "/" + invokerID
 					+ "/" + directionX + "/" + directionY + "/"));
 		}
 	}
@@ -1022,5 +1034,9 @@ public class World {
 
 	public void removeAddress(InetAddress address) {
 		addresses.remove(address);
+	}
+	
+	public void addInput(String s){
+		inputBuffer.add(s);
 	}
 }

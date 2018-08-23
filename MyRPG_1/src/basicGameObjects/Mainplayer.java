@@ -12,7 +12,10 @@ import org.joml.Vector3f;
 import assets.Assets;
 import game.AudioManager;
 import game.GameLogicManager;
+import mechanics.Collision;
 import mechanics.ErrorLog;
+import playerObjects.Equipment;
+import playerObjects.Inventory;
 import render.Camera;
 import render.Shader;
 import render.Texture;
@@ -29,8 +32,8 @@ public class Mainplayer extends Players {
 	private boolean onlineMode;
 	private static Texture tex;
 
-	private List<Enemy> elist;
-	private List<Players> plist;
+	//private List<Enemy> elist;
+	//private List<Players> plist;
 
 	private static InetAddress ip;
 
@@ -52,6 +55,7 @@ public class Mainplayer extends Players {
 
 		transform.pos.set(new Vector3f(posX, posY, 0));
 		transform.scale.sub(0.5f, 0.5f, 0);
+		transform.scale.add(0, 0.0f, 0);
 		actionsToDo = new ArrayList<String>();
 		this.worldX = world.getWidth();
 		this.worldY = world.getHeight();
@@ -317,143 +321,16 @@ public class Mainplayer extends Players {
 		}
 	}
 
-	private boolean checkCollision(float dx, float dy, World world) { // Worldtile
-																		// and
-																		// Enemy
-		float x = transform.pos.x + transform.scale.x;
-		float y = transform.pos.y - transform.scale.y;
-		float ix = x + 0;
-		float iy = y + 0;
-
-		if (dx > 0) { // left- 0 right+
-			ix = (int) (transform.pos.x + transform.scale.x + dx + 1);
-		}
-		if (dx < 0) {
-			ix = (int) (transform.pos.x - transform.scale.x - dx + 1);
-		}
-
-		if (dy > 0) { // top+ 0 down-
-			iy = (int) (transform.pos.y + transform.scale.y + dy - 1);
-		}
-		if (dy < 0) {
-			iy = (int) (transform.pos.y - transform.scale.y - dy - 1);
-		}
-		iy = Math.abs(iy);
-
-		if (world.getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+	private boolean checkCollision(float dx, float dy, World world) { // WorldtileAndEnemy
+		this.direction.x = dx;		
+		this.direction.y = dy;
+		if(Collision.checkCollisionMap(this)){
 			return true;
-		}
-		// corners
-		ix = x + 0;
-		iy = y + 0;
-		if (dx > 0) { // right
-			ix = (int) Math.round(transform.pos.x + transform.scale.x * 2 + dx);
-			iy = (int) Math.round(transform.pos.y - transform.scale.y * 2);
-		}
-		if (dx < 0) { // left
-			ix = (int) Math.round(transform.pos.x + dx);
-			iy = (int) Math.round(transform.pos.y - transform.scale.y * 2);
-		}
-
-		if (dy > 0) { // top
-			ix = (int) Math.round(transform.pos.x + transform.scale.x * 2);
-			iy = (int) Math.round(transform.pos.y + dy);
-		}
-		if (dy < 0) { // down
-			ix = (int) Math.round(transform.pos.x + transform.scale.x * 2);
-			iy = (int) Math.round(transform.pos.y - transform.scale.y * 2 + dy);
-		}
-		// ix = Math.abs(ix);
-		iy = Math.abs(iy);
-
-		if (world.getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+		}	
+		Object o = Collision.checkCollisionMopsAndPlayers(this);
+		if(o != null){
 			return true;
-		}
-
-		elist = world.getEnemyList();
-		plist = world.getPlayersList();
-		if (elist.size() > 0) {
-			for (int i = 0; i < elist.size(); i++) {
-				Transform hitTransform;
-				hitTransform = elist.get(i).getTransform();
-				float xHit = hitTransform.pos.x + hitTransform.scale.x;
-				float yHit = hitTransform.pos.y - hitTransform.scale.y;
-				float radHitX = hitTransform.scale.x;
-				float radHitY = hitTransform.scale.y;
-				float xCol;
-				float yCol;
-
-				xCol = x - xHit;
-				yCol = y - yHit;
-				float xSide = xCol;
-				float ySide = yCol;
-				xCol = Math.abs(xCol);
-				yCol = Math.abs(yCol);
-
-				if (xSide < 0) {
-					if (xCol <= radHitX + transform.scale.x + dx && yCol <= radHitY + transform.scale.y) {
-						return true;
-					}
-				}
-				if (xSide > 0) {
-					if (xCol <= radHitX + transform.scale.x - dx && yCol <= radHitY + transform.scale.y) {
-						return true;
-					}
-				}
-				if (ySide < 0) {
-					if (xCol <= radHitX + transform.scale.x && yCol <= radHitY + transform.scale.y + dy) {
-						return true;
-					}
-				}
-				if (ySide > 0) {
-					if (xCol <= radHitX + transform.scale.x && yCol <= radHitY + transform.scale.y - dy) {
-						return true;
-					}
-				}
-			}
-		}
-
-		if (plist.size() > 0) {
-			// System.out.println(plist.size());
-			for (int i = 0; i < plist.size(); i++) {
-				Transform hitTransform;
-				hitTransform = plist.get(i).getTransform();
-				float xHit = hitTransform.pos.x + hitTransform.scale.x;
-				float yHit = hitTransform.pos.y - hitTransform.scale.y;
-				float radHitX = hitTransform.scale.x;
-				float radHitY = hitTransform.scale.y;
-				float xCol;
-				float yCol;
-
-				xCol = x - xHit;
-				yCol = y - yHit;
-				float xSide = xCol;
-				float ySide = yCol;
-				xCol = Math.abs(xCol);
-				yCol = Math.abs(yCol);
-
-				if (xSide < 0) {
-					if (xCol <= radHitX + transform.scale.x + dx && yCol <= radHitY + transform.scale.y) {
-						return true;
-					}
-				}
-				if (xSide > 0) {
-					if (xCol <= radHitX + transform.scale.x - dx && yCol <= radHitY + transform.scale.y) {
-						return true;
-					}
-				}
-				if (ySide < 0) {
-					if (xCol <= radHitX + transform.scale.x && yCol <= radHitY + transform.scale.y + dy) {
-						return true;
-					}
-				}
-				if (ySide > 0) {
-					if (xCol <= radHitX + transform.scale.x && yCol <= radHitY + transform.scale.y - dy) {
-						return true;
-					}
-				}
-			}
-		}
+		}	
 		return false;
 	}
 
@@ -494,10 +371,6 @@ public class Mainplayer extends Players {
 
 	public void setSkillactive() {
 		skill1 = false;
-	}
-
-	public String getID() {
-		return id;
 	}
 
 	public int getHp() {

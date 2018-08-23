@@ -2,158 +2,189 @@ package mechanics;
 
 import java.util.List;
 
+import basicGameObjects.BasisObject;
 import basicGameObjects.Enemy;
 import basicGameObjects.Players;
+import basicGameObjects.Skill;
 import render.Transform;
-import world.World;
 
 public class Collision {
 
-	public static boolean checkCollisionPlayers(Players p, World world) {
-		if(true){
-			return false;
-		}
-		
-		List<Enemy> elist;
-		List<Players> plist;
-		
-		float dx = p.getDirection().x;
-		float dy = p.getDirection().y;
-		float x = p.getTransform().pos.x + p.getTransform().scale.x;
-		float y = p.getTransform().pos.y - p.getTransform().scale.y;
-		float ix = x + 0;
-		float iy = y + 0;
+	public static boolean checkCollisionMap(BasisObject o) {
+		float x1 = o.getTransform().pos.x; // corner1
+		float x2 = o.getTransform().pos.x + o.getTransform().scale.x * 2;
+		float y1 = o.getTransform().pos.y;
+		float y2 = o.getTransform().pos.y - o.getTransform().scale.y * 2;
 
-		if (dx > 0) { // left- 0 right+
-			ix = (int) (x + dx + 1);
-		}
-		if (dx < 0) {
-			ix = (int) (x - dx + 1);
-		}
+		float ix = 0;
+		float iy = 0;
+//		System.out.println(x1 + " collsion " + x2);
 
-		if (dy > 0) { // top+ 0 down-
-			iy = (int) (y + dy - 1);
-		}
-		if (dy < 0) {
-			iy = (int) (y - dy - 1);
-		}
-		iy = Math.abs(iy);
-
-		if (world.getTile((int) ix / 2, (int) iy / 2).isSolid()) {
-			return true;
-		}
-		// corners
-		ix = x + 0;
-		iy = y + 0;
+		float dx = o.getDirection().x;
+		float dy = o.getDirection().y;
 		if (dx > 0) { // right
-			ix = (int) Math.round(x * 2 + dx);
-			iy = (int) Math.round(y * 2);
+			ix = x2 + 0.01f;
+			iy = y1;
+			iy = Math.abs(iy);
+			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				return true;
+			} else {
+				ix = x2 + 0.01f;
+				iy = y2;
+				iy = Math.abs(iy);
+				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					return true;
+				}
+			}
 		}
 		if (dx < 0) { // left
-			ix = (int) Math.round(p.getTransform().pos.x + dx);
-			iy = (int) Math.round(y * 2);
-		}
-
-		if (dy > 0) { // top
-			ix = (int) Math.round(x * 2);
-			iy = (int) Math.round(p.getTransform().pos.y + dy);
-		}
-		if (dy < 0) { // down
-			ix = (int) Math.round(x * 2);
-			iy = (int) Math.round(y * 2 + dy);
-		}
-		// ix = Math.abs(ix);
-		iy = Math.abs(iy);
-
-//		if (world.getTile((int) ix / 2, (int) iy / 2).isSolid()) {
-//			return true;
-//		}
-
-		elist = world.getEnemyList();
-		plist = world.getPlayersList();
-		if (elist.size() > 0) {
-			for (int i = 0; i < elist.size(); i++) {
-				Transform hitTransform;
-				hitTransform = elist.get(i).getTransform();
-				float xHit = hitTransform.pos.x + hitTransform.scale.x;
-				float yHit = hitTransform.pos.y - hitTransform.scale.y;
-				float radHitX = hitTransform.scale.x;
-				float radHitY = hitTransform.scale.y;
-				float xCol;
-				float yCol;
-
-				xCol = x - xHit;
-				yCol = y - yHit;
-				float xSide = xCol;
-				float ySide = yCol;
-				xCol = Math.abs(xCol);
-				yCol = Math.abs(yCol);
-
-				if (xSide < 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x + dx && yCol <= radHitY + p.getTransform().scale.y) {
-						return true;
-					}
-				}
-				if (xSide > 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x - dx && yCol <= radHitY + p.getTransform().scale.y) {
-						return true;
-					}
-				}
-				if (ySide < 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x && yCol <= radHitY + p.getTransform().scale.y + dy) {
-						return true;
-					}
-				}
-				if (ySide > 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x && yCol <= radHitY + p.getTransform().scale.y - dy) {
-						return true;
-					}
+			ix = x1 - 0.01f;
+			iy = y1;
+			iy = Math.abs(iy);
+			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				return true;
+			} else {
+				ix = x1 - 0.01f;
+				iy = y2;
+				iy = Math.abs(iy);
+				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					return true;
 				}
 			}
 		}
 
-		if (plist.size() > 0) {
-			// System.out.println(plist.size());
-			for (int i = 0; i < plist.size(); i++) {
-				Transform hitTransform;
-				hitTransform = plist.get(i).getTransform();
-				float xHit = hitTransform.pos.x + hitTransform.scale.x;
-				float yHit = hitTransform.pos.y - hitTransform.scale.y;
-				float radHitX = hitTransform.scale.x;
-				float radHitY = hitTransform.scale.y;
-				float xCol;
-				float yCol;
-
-				xCol = x - xHit;
-				yCol = y - yHit;
-				float xSide = xCol;
-				float ySide = yCol;
-				xCol = Math.abs(xCol);
-				yCol = Math.abs(yCol);
-
-				if (xSide < 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x + dx && yCol <= radHitY + p.getTransform().scale.y) {
-						return true;
-					}
+		if (dy > 0) { // top
+			ix = x1;
+			iy = y1 + 0.01f;
+			iy = Math.abs(iy);
+			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				return true;
+			} else {
+				ix = x2;
+				iy = y1 + 0.01f;
+				iy = Math.abs(iy);
+				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					return true;
 				}
-				if (xSide > 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x - dx && yCol <= radHitY + p.getTransform().scale.y) {
-						return true;
-					}
-				}
-				if (ySide < 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x && yCol <= radHitY +p.getTransform().scale.y + dy) {
-						return true;
-					}
-				}
-				if (ySide > 0) {
-					if (xCol <= radHitX + p.getTransform().scale.x && yCol <= radHitY + p.getTransform().scale.y - dy) {
-						return true;
-					}
+			}
+		}
+		if (dy < 0) { // down
+			ix = x1;
+			iy = y2 - 0.01f;
+			iy = Math.abs(iy);
+			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				return true;
+			} else {
+				ix = x2;
+				iy = y2 - 0.01f;
+				iy = Math.abs(iy);
+				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					return true;
 				}
 			}
 		}
 		return false;
+	}
 
+	public static Skill checkCollisionSkills(BasisObject o) {
+		List<Skill> slist;
+		slist = o.getWorld().getSkillList();
+		float posX = o.getTransform().pos.x + o.getTransform().scale.x;
+		float posY = o.getTransform().pos.y - o.getTransform().scale.y;
+		float radX = o.getTransform().scale.x + 0f;
+		float radY = o.getTransform().scale.y + 0f;
+		for (Skill s : slist) {
+			if (s.getID() != o.getID()) {
+				Transform hitTransform;
+				hitTransform = s.getTransform();
+				float px = hitTransform.pos.x + hitTransform.scale.x;
+				float py = hitTransform.pos.y - hitTransform.scale.y;
+				float rx = hitTransform.scale.x + 0;
+				float ry = hitTransform.scale.y + 0;
+
+				float pxx = posX - px;
+				float pyy = posY - py;
+				float radxx = radX + rx;
+				float radyy = radY + ry;
+
+				if (pxx < 0) {
+					pxx = -pxx;
+				}
+				if (pyy < 0) {
+					pyy = -pyy;
+				}
+
+				if (pxx <= radxx && pyy <= radyy) {
+					return s;
+				}
+			}
+
+		}
+		return null;
+	}
+
+	public static BasisObject checkCollisionMopsAndPlayers(BasisObject o) {
+		List<Enemy> elist;
+		List<Players> plist;
+		elist = o.getWorld().getEnemyList();
+		plist = o.getWorld().getPlayersList();
+
+		float dx = o.getDirection().x;
+		float dy = o.getDirection().y;
+		float aX = 0, bX = 0, aY = 0, bY = 0;
+		if (dx > 0) {
+			bX = dx;
+		}
+		if (dx < 0) {
+			aX = dx;
+		}
+		if (dy > 0) {
+			aY = dy;
+		}
+		if (dy < 0) {
+			bY = dy;
+		}
+
+		float x1 = o.getTransform().pos.x + aX; // corner1
+		float x2 = o.getTransform().pos.x + o.getTransform().scale.x * 2 + bX;
+		float y1 = o.getTransform().pos.y + aY;
+		float y2 = o.getTransform().pos.y - o.getTransform().scale.y * 2 + bY;
+
+		float epMinX_oMaxX, epMinY_oMaxY, oMinX_epMaxX, oMinY_epMaxY;
+
+		for (Enemy e : elist) {
+			if (e.getID() != o.getID()) {
+				epMinX_oMaxX = e.getTransform().pos.x - x2;
+				epMinY_oMaxY = (e.getTransform().pos.y - e.getTransform().scale.y * 2) - y1;
+				oMinX_epMaxX = x1 - (e.getTransform().pos.x + e.getTransform().scale.x * 2);
+				oMinY_epMaxY = y2 - e.getTransform().pos.y;
+
+				if (epMinX_oMaxX > 0 || epMinY_oMaxY > 0) {
+					continue;
+				}
+				if (oMinX_epMaxX > 0 || oMinY_epMaxY > 0) {
+					continue;
+				}
+				return e;
+			}
+		}
+
+		for (Players p : plist) {
+			if (p.getID() != o.getID()) {
+				epMinX_oMaxX = p.getTransform().pos.x - x2;
+				epMinY_oMaxY = (p.getTransform().pos.y - p.getTransform().scale.y * 2) + y1;
+				oMinX_epMaxX = x1 - (p.getTransform().pos.x + p.getTransform().scale.x * 2);
+				oMinY_epMaxY = y2 - p.getTransform().pos.y;
+
+				if (epMinX_oMaxX > 0 || epMinY_oMaxY > 0) {
+					continue;
+				}
+				if (oMinX_epMaxX > 0 || oMinY_epMaxY > 0) {
+					continue;
+				}
+				return p;
+			}
+		}
+		return null;
 	}
 }
