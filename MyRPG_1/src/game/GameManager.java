@@ -4,11 +4,13 @@ import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.opengl.GL11.GL_BLEND;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 //import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glBlendFunc;
+import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL11.glViewport;
 //import static org.lwjgl.opengl.GL11.glClear;
@@ -21,6 +23,7 @@ import org.lwjgl.opengl.GL;
 
 import assets.Asset_circle;
 import assets.Assets;
+import basicGameObjects.BasisObject;
 import gui.Gui;
 import io.Window;
 import mechanics.ErrorLog;
@@ -125,16 +128,17 @@ public class GameManager {
 				currentFPS = totalFrames;
 				totalFrames = 0;
 				gui.setFPS(currentFPS);
-				// System.out.println("FPS: " + currentFPS);
+		//		System.out.println("FPS: " + currentFPS);
 			}
 
 			if (window.hasResized()) {
 				GameLogicManager.setWindow();
 				glViewport(0, 0, window.getWidth(), window.getHeight());
 			}
-
+			
 			GameLogicManager.render(shader, tilerenderer);
 
+			
 			window.update();
 
 			if (gui.getInit()) {
@@ -143,7 +147,6 @@ public class GameManager {
 			}
 			// end
 			window.swapBuffers();
-
 		}
 		GameLogicManager.setStoppped();
 		AudioManager.closeAudio();
@@ -152,7 +155,7 @@ public class GameManager {
 	public static void loginSuccess() {
 		accessSuccess = true;
 	}
-
+	
 	public synchronized static Window getWindow() {
 		return window;
 	}

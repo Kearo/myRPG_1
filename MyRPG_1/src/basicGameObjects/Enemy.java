@@ -1,5 +1,6 @@
 package basicGameObjects;
 
+import java.io.File;
 import java.util.List;
 import java.util.Random;
 
@@ -28,8 +29,7 @@ public class Enemy extends BasisObject{
 	protected String hitInvokerID;
 
 	protected int worldX, worldY;
-	protected static Texture tex;
-	protected static Texture deathtex;
+	protected static Texture[] tex = null;
 	protected float speed = 0.2f;
 	protected boolean delete = false;
 
@@ -58,10 +58,28 @@ public class Enemy extends BasisObject{
 	protected int walkCounter = 0;
 	protected float walkCounterAddX, walkCounterAddY;
 	protected Players chaseTarget;
+	
+	protected static String dirPath = "./textures/monsters";
+	protected int texPos = 1;
 
 	public static void initTex() {
-		tex = new Texture("monsters/" + "enemy_test.png");
-		deathtex = new Texture("monsters/" + "enemy_death_test.png");
+		File dir = new File(dirPath);	
+		File[] fileList = dir.listFiles();
+		int length = fileList.length;
+		for(File f : fileList){
+			if(f.isDirectory()){
+				length--;
+			}
+		}
+		tex = new Texture[length];
+		int counter = 0;
+		for(int i = 0; i < fileList.length; i++){
+			if(fileList[i].isDirectory()){
+				counter++;
+				continue;
+			}
+			tex[i-counter] = new Texture("monsters/" + fileList[i].getName());
+		}
 	}
 
 	public Enemy(World world, float posX, float posY, String id, boolean serverSide) {
@@ -71,7 +89,7 @@ public class Enemy extends BasisObject{
 		this.worldY = world.getHeight();
 		this.id = id;
 		onlineMode = world.getOnline();
-		transform.scale.add(new Vector3f(-.5f, -0.5f, 0));
+	//	transform.scale.add(new Vector3f(-.5f, -0.5f, 0));
 		transform.pos.add(new Vector3f(posX, posY, 0));
 		lootList = new Item[10];
 		this.serverSide = serverSide;
@@ -256,6 +274,7 @@ public class Enemy extends BasisObject{
 	protected void death() {
 		death = true;
 		deathTimer = System.nanoTime();
+		texPos = 0;
 	}
 
 	public void hit(String hitID, String hitInvokerID) {
@@ -313,6 +332,21 @@ public class Enemy extends BasisObject{
 				// world.manageUDPOutput(new String("move/monster/" + id + "/" +
 				// move.x + "/" + move.y + "/"), "clients");
 			}
+		}
+
+	}
+	
+	public void render(Shader shader, Camera camera, World world) {
+		if (tex != null) {
+			Matrix4f target = camera.getProjection();
+			target.mul(world.getWorldMatrix());
+
+			shader.bind();
+			shader.setUniform("sampler", 0);
+			shader.setUniform("projection", transform.getProjection(target));
+			
+			tex[texPos].bind(0);
+			Assets.getModel().render();
 		}
 
 	}
@@ -382,21 +416,4 @@ public class Enemy extends BasisObject{
 		interpolation = true;
 	}
 
-	public void render(Shader shader, Camera camera, World world) {
-		if (tex != null && deathtex != null) {
-			Matrix4f target = camera.getProjection();
-			target.mul(world.getWorldMatrix());
-
-			shader.bind();
-			shader.setUniform("sampler", 0);
-			shader.setUniform("projection", transform.getProjection(target));
-			if (death) {
-				deathtex.bind(0);
-			} else {
-				tex.bind(0);
-			}
-			Assets.getModel().render();
-		}
-
-	}
 }

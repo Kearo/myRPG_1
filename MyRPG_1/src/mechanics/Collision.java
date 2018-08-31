@@ -11,43 +11,49 @@ import render.Transform;
 public class Collision {
 
 	public static boolean checkCollisionMap(BasisObject o) {
-		float x1 = o.getTransform().pos.x; // corner1
-		float x2 = o.getTransform().pos.x + o.getTransform().scale.x * 2;
-		float y1 = o.getTransform().pos.y;
-		float y2 = o.getTransform().pos.y - o.getTransform().scale.y * 2;
+		float scaleMultiplier = (float) (2 / (Math.sqrt(o.getTransform().scale.x * o.getTransform().scale.x + 
+									o.getTransform().scale.y * o.getTransform().scale.x)));
+	//	System.out.println(scaleMultiplier + " " + o.getTransform().scale.x);
+		float x1 = o.getTransform().pos.x + o.getTransform().scale.x / scaleMultiplier; // corner1
+		float x2 = o.getTransform().pos.x + o.getTransform().scale.x * scaleMultiplier;
+		float y1 = o.getTransform().pos.y - o.getTransform().scale.y / scaleMultiplier;
+		float y2 = o.getTransform().pos.y - o.getTransform().scale.y * scaleMultiplier;
 
 		float ix = 0;
 		float iy = 0;
-//		System.out.println(x1 + " collsion " + x2);
 
 		float dx = o.getDirection().x;
 		float dy = o.getDirection().y;
 		if (dx > 0) { // right
-			ix = x2 + 0.01f;
+			ix = x2 + dx;
 			iy = y1;
 			iy = Math.abs(iy);
 			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				o.setInBetween(((int) ix/2) - x2, ((int) iy/2) + y1);
 				return true;
 			} else {
-				ix = x2 + 0.01f;
+				ix = x2 + dx;
 				iy = y2;
 				iy = Math.abs(iy);
 				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					o.setInBetween(((int) ix/2) - x2, ((int) iy/2) + y2);
 					return true;
 				}
 			}
 		}
 		if (dx < 0) { // left
-			ix = x1 - 0.01f;
+			ix = x1 + dx;
 			iy = y1;
 			iy = Math.abs(iy);
 			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				o.setInBetween(((int)ix/2) - x1, ((int)iy/2) + y1);
 				return true;
 			} else {
-				ix = x1 - 0.01f;
+				ix = x1 + dx;
 				iy = y2;
 				iy = Math.abs(iy);
 				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					o.setInBetween(((int)ix/2) - x1,  ((int) iy/2) + y2);
 					return true;
 				}
 			}
@@ -55,30 +61,34 @@ public class Collision {
 
 		if (dy > 0) { // top
 			ix = x1;
-			iy = y1 + 0.01f;
+			iy = y1 + dy;
 			iy = Math.abs(iy);
 			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				o.setInBetween(((int) ix/2) - x1, ((int) iy/2) + y1);
 				return true;
 			} else {
 				ix = x2;
-				iy = y1 + 0.01f;
+				iy = y1 + dy;
 				iy = Math.abs(iy);
 				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					o.setInBetween(((int) ix/2) - x2, ((int) iy/2) + y1);
 					return true;
 				}
 			}
 		}
 		if (dy < 0) { // down
 			ix = x1;
-			iy = y2 - 0.01f;
+			iy = y2 + dy;
 			iy = Math.abs(iy);
 			if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+				o.setInBetween(((int) ix/2) - x1, ((int) iy/2) + y2);
 				return true;
 			} else {
 				ix = x2;
-				iy = y2 - 0.01f;
+				iy = y2 + dy;
 				iy = Math.abs(iy);
 				if (o.getWorld().getTile((int) ix / 2, (int) iy / 2).isSolid()) {
+					o.setInBetween(((int) ix/2) - x2, ((int) iy/2) + y2);
 					return true;
 				}
 			}
@@ -144,16 +154,21 @@ public class Collision {
 		if (dy < 0) {
 			bY = dy;
 		}
+		
+		float scaleMultiplier = (float) (2 / (Math.sqrt((o.getTransform().scale.x * o.getTransform().scale.x) + 
+				(o.getTransform().scale.y * o.getTransform().scale.x))));
 
 		float x1 = o.getTransform().pos.x + aX; // corner1
-		float x2 = o.getTransform().pos.x + o.getTransform().scale.x * 2 + bX;
+		float x2 = o.getTransform().pos.x + o.getTransform().scale.x * scaleMultiplier + bX;
 		float y1 = o.getTransform().pos.y + aY;
-		float y2 = o.getTransform().pos.y - o.getTransform().scale.y * 2 + bY;
+		float y2 = o.getTransform().pos.y - o.getTransform().scale.y * scaleMultiplier + bY;
 
 		float epMinX_oMaxX, epMinY_oMaxY, oMinX_epMaxX, oMinY_epMaxY;
 
 		for (Enemy e : elist) {
 			if (e.getID() != o.getID()) {
+				scaleMultiplier = (float) (2 / (Math.sqrt((e.getTransform().scale.x * e.getTransform().scale.x) + 
+						(e.getTransform().scale.y * e.getTransform().scale.x))));
 				epMinX_oMaxX = e.getTransform().pos.x - x2;
 				epMinY_oMaxY = (e.getTransform().pos.y - e.getTransform().scale.y * 2) - y1;
 				oMinX_epMaxX = x1 - (e.getTransform().pos.x + e.getTransform().scale.x * 2);
@@ -165,14 +180,19 @@ public class Collision {
 				if (oMinX_epMaxX > 0 || oMinY_epMaxY > 0) {
 					continue;
 				}
+				if(o.getInvoker() != null && o.getInvoker().equals(e.getID())){
+					continue;
+				}
 				return e;
 			}
 		}
 
 		for (Players p : plist) {
 			if (p.getID() != o.getID()) {
+				scaleMultiplier = (float) (2 / (Math.sqrt((p.getTransform().scale.x * p.getTransform().scale.x) + 
+						(p.getTransform().scale.y * p.getTransform().scale.x))));
 				epMinX_oMaxX = p.getTransform().pos.x - x2;
-				epMinY_oMaxY = (p.getTransform().pos.y - p.getTransform().scale.y * 2) + y1;
+				epMinY_oMaxY = (p.getTransform().pos.y - p.getTransform().scale.y * 2) - y1;
 				oMinX_epMaxX = x1 - (p.getTransform().pos.x + p.getTransform().scale.x * 2);
 				oMinY_epMaxY = y2 - p.getTransform().pos.y;
 
@@ -180,6 +200,9 @@ public class Collision {
 					continue;
 				}
 				if (oMinX_epMaxX > 0 || oMinY_epMaxY > 0) {
+					continue;
+				}
+				if(o.getInvoker() != null && o.getInvoker().equals(p.getID())){
 					continue;
 				}
 				return p;

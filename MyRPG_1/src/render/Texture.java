@@ -68,6 +68,5 @@ public class Texture {
 			glBindTexture(GL_TEXTURE_2D, id);
 			glBindTexture(0,0);
 		}
-	}
-	
+	}	
 }

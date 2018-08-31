@@ -30,16 +30,9 @@ public class Mainplayer extends Players {
 	private boolean moveCheck = false;
 	private Vector2f moveReminder;
 	private boolean onlineMode;
-	private static Texture tex;
-
-	//private List<Enemy> elist;
-	//private List<Players> plist;
-
 	private static InetAddress ip;
 
 	public static void initTex() {
-		tex = new Texture("player/" + "sword1_diagonal2.png");
-		// tex = new Texture("player/" + "test.png");
 		try {
 			ip = InetAddress.getByName("localhost");
 		} catch (UnknownHostException e) {
@@ -52,10 +45,9 @@ public class Mainplayer extends Players {
 		super(id, posX, posY, ip, false, world);
 		transform = new Transform();
 		this.id = id;
-
 		transform.pos.set(new Vector3f(posX, posY, 0));
-		transform.scale.sub(0.5f, 0.5f, 0);
-		transform.scale.add(0, 0.0f, 0);
+		//transform.scale.sub(0.5f, 0.5f, 0);
+		//transform.scale.add(5f, 5f, 0);
 		actionsToDo = new ArrayList<String>();
 		this.worldX = world.getWidth();
 		this.worldY = world.getHeight();
@@ -71,22 +63,6 @@ public class Mainplayer extends Players {
 		equipment = new Equipment();
 		direction = new Vector2f(0, 0);
 	}
-
-	@Override
-	public void render(Shader shader, Camera camera, World world) {
-		if (tex != null) {
-			Matrix4f target = camera.getProjection();
-			target.mul(world.getWorldMatrix());
-
-			shader.bind();
-			shader.setUniform("sampler", 0);
-			shader.setUniform("projection", transform.getProjection(target));
-			tex.bind(0);
-			Assets.getModel().render();
-		}
-
-	}
-
 	
 	public void update(Camera camera, World world) {
 		if (!onlineMode) {
@@ -292,8 +268,6 @@ public class Mainplayer extends Players {
 
 					skillLock1 = true;
 					Skill s = new Skill(transform.pos.x, transform.pos.y, world, id, false);
-					// int listPos = world.addSkill(transform.pos.x,
-					// transform.pos.y, id);
 					// pos of mouse relative to the view;
 					float x = world.getMouseX() / (world.getWidth() / 2) - s.getTransform().scale.x;
 					float y = -(world.getMouseY() / (world.getHeight() / 2)) + s.getTransform().scale.y;
@@ -333,7 +307,7 @@ public class Mainplayer extends Players {
 		}	
 		return false;
 	}
-
+	
 	public void dmg(int dmg) {
 		setHp(getHp() - dmg);
 	}

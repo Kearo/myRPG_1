@@ -1,11 +1,13 @@
 package basicGameObjects;
 
+import java.io.File;
 import java.util.List;
 
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import assets.Asset_circle;
 import assets.Assets;
 import game.AudioManager;
 import mechanics.Collision;
@@ -17,8 +19,8 @@ import world.World;
 
 public class Skill extends BasisObject{
 	// protected String playerID;
-	protected static Texture tex;
-	protected static String audio;
+	protected static Texture[] tex = null;
+	protected static String audio = null;
 	// private int dmg = 10;
 	protected static int manaCost = 10;
 	protected float traveldistance = 25;
@@ -30,7 +32,6 @@ public class Skill extends BasisObject{
 	protected List<Enemy> elist;
 	protected List<Players> plist;
 	protected int listPos;
-	protected String invokerID;
 	protected boolean gotHit = false;
 	protected String hitID;
 	protected String hitInvokerID;
@@ -43,9 +44,29 @@ public class Skill extends BasisObject{
 	protected int power = 5;
 	protected int walkCounter = 0;
 	protected float walkCounterAddX, walkCounterAddY;
+	
+	protected static String dirPath = "./textures/skills";
+	protected int texPos = 0;
 
 	public static void initTex() {
-		tex = new Texture("skills/" + "test_skill_circle.png");
+		File dir = new File(dirPath);	
+		File[] fileList = dir.listFiles();
+		int length = fileList.length;
+		for(File f : fileList){
+			if(f.isDirectory()){
+				length--;
+			}
+		}
+		tex = new Texture[length];
+		int counter = 0;
+		for(int i = 0; i < fileList.length; i++){
+			if(fileList[i].isDirectory()){
+				counter++;
+				continue;
+			}
+			tex[i-counter] = new Texture("skills/" + fileList[i].getName());
+		}
+		//tex = new Texture("skills/" + "test_skill.png");
 		audio = "soundEffects/" + "bounce.wav";
 	}
 
@@ -58,6 +79,8 @@ public class Skill extends BasisObject{
 		transform.pos.add(new Vector3f(posx, posy, 0));
 		this.onlineMode = world.getOnline();
 		this.serverSide = serverSide;
+//		tex = new Texture("skills/" + "test_skill.png");
+//		audio = "soundEffects/" + "bounce.wav";
 	}
 
 	public Skill(String id, float posx, float posy, World world, String invokerID, float dx, float dy,
@@ -233,8 +256,8 @@ public class Skill extends BasisObject{
 			shader.setUniform("sampler", 0);
 			shader.setUniform("projection", transform.getProjection(target));
 
-			tex.bind(0);
-			Assets.getModel().render();
+			tex[texPos].bind(0);
+			Asset_circle.getModel().render();
 		}
 	}
 

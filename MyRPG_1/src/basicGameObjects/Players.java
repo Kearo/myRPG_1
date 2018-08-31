@@ -1,5 +1,6 @@
 package basicGameObjects;
 
+import java.io.File;
 import java.net.InetAddress;
 
 import org.joml.Matrix4f;
@@ -8,13 +9,14 @@ import org.joml.Vector3f;
 
 import assets.Assets;
 import mechanics.Collision;
+import render.Animation;
 import render.Camera;
 import render.Shader;
 import render.Texture;
 import render.Transform;
 import world.World;
 
-public class Players extends BasisObject{
+public class Players extends BasisObject {
 
 	// private String name;
 	// private int level;
@@ -29,8 +31,7 @@ public class Players extends BasisObject{
 	protected long skillcd = 0;
 	protected float cd = 2f;
 	protected int worldX, worldY;
-	protected float speed = 0.2f; // 0.2f
-	private static Texture tex;
+	protected float speed = 0.4f; // 0.2f
 	protected boolean delete = false;
 	protected boolean gotHit = false;
 	protected String hitID;
@@ -43,14 +44,36 @@ public class Players extends BasisObject{
 	protected boolean interpolation = false;
 	protected int walkCounter = 0;
 	protected float walkCounterAddX, walkCounterAddY;
+	protected Animation[] animations = null;
+	protected int use_animation;
+	protected boolean useAnim = false;
+	protected static String dirPath = "./textures/player";
+	protected int texPos = 1;
 
 	public static void initTex() {
-		tex = new Texture("player/" + "sword1_diagonal.png");
+		File dir = new File(dirPath);	
+		File[] fileList = dir.listFiles();
+		int length = fileList.length;
+		for(File f : fileList){
+			if(f.isDirectory()){
+				length--;
+			}
+		}
+		tex = new Texture[length];
+		int counter = 0;
+		for(int i = 0; i < fileList.length; i++){
+			if(fileList[i].isDirectory()){
+				counter++;
+				continue;
+			}
+			tex[i-counter] = new Texture("player/" + fileList[i].getName());
+		}
 	}
 
 	public Players(String id, float posX, float posY, InetAddress ip, boolean serverSide, World world) {
 		transform = new Transform();
 		transform.pos.set(posX, posY, 0);
+		transform.scale.sub(0.5f, 0.5f, 0);
 		skillBar = new Skill[5];
 		skillBar[0] = new Skill(0, 0, world, id, serverSide);
 		this.id = id;
@@ -59,6 +82,10 @@ public class Players extends BasisObject{
 		this.world = world;
 		serverPos_interpolation = new Vector2f(0, 0);
 		initPlayer();
+		animations = new Animation[2];
+		use_animation = 0;
+		setAnimation(0, new Animation(4, 5, "player/idle"));
+		setAnimation(1, new Animation(4, 5, "player/walking"));
 	}
 
 	public void initPlayer() {
@@ -70,16 +97,15 @@ public class Players extends BasisObject{
 		if (serverSide) {
 			if (!Collision.checkCollisionMap(this)) {
 				Object o = Collision.checkCollisionMopsAndPlayers(this);
-				if(o == null){
+				if (o == null) {
 					move();
-				}	
+				}
 			} else {
 				direction.x = 0;
 				direction.y = 0;
 				world.addToBuffer(new String("move/player/" + id + "/" + direction.x + "/" + direction.y + "/"
 						+ transform.pos.x + "/" + transform.pos.y + "/"));
 			}
-
 		} else {
 			move();
 		}
@@ -119,7 +145,9 @@ public class Players extends BasisObject{
 	}
 
 	public void useSkill(World world, int skillBarNumber, float dx, float dy) {
+		skillLock1 = true;
 		world.addSkill(skillBar[skillBarNumber].getID(), transform.pos.x, transform.pos.y, id, dx, dy);
+		skillcd = System.nanoTime();
 	}
 
 	public void useSkill(World world, Skill s) {// later form skillCreation
@@ -141,10 +169,12 @@ public class Players extends BasisObject{
 		}
 		if (world.getOnline() && !serverSide) {
 			if (interpolation) {
+				System.out.println(serverPos_interpolation.x + " x " + transform.pos.x + " w "
+						+ serverPos_interpolation.y + " y " + transform.pos.y);
 				float x = serverPos_interpolation.x - transform.pos.x;
 				float y = serverPos_interpolation.y - transform.pos.y;
+				// System.out.println(x);
 				if (Math.abs(x) > 0.5f || Math.abs(y) > 0.5f) {
-					System.out.println("tes" + transform.pos.x + "  " + transform.pos.y);
 					transform.pos.x = serverPos_interpolation.x;
 					transform.pos.y = serverPos_interpolation.y;
 				} else {
@@ -164,12 +194,16 @@ public class Players extends BasisObject{
 				if (walkCounter > 0) {
 					transform.pos.add(new Vector3f(walkCounterAddX, walkCounterAddY, 0));
 					walkCounter--;
-					System.out.println("8888" + transform.pos.x + "  " +transform.pos.y);
 				}
 			}
 		}
 		if (moved) {
-			transform.pos.add(new Vector3f(direction, 0));
+			if (inBetweenDistance) {
+				transform.pos.add(new Vector3f(inBetween, 0));
+				inBetweenDistance = false;
+			} else {
+				transform.pos.add(new Vector3f(direction, 0));
+			}
 		}
 	}
 
@@ -186,7 +220,12 @@ public class Players extends BasisObject{
 			shader.bind();
 			shader.setUniform("sampler", 0);
 			shader.setUniform("projection", transform.getProjection(target));
-			tex.bind(0);
+
+			if (animations != null && useAnim == true) {
+				animations[use_animation].bind(0);
+			} else {
+				tex[texPos].bind(0);
+			}
 			Assets.getModel().render();
 		}
 	}
@@ -194,6 +233,10 @@ public class Players extends BasisObject{
 	public void setInterpolatation(float x, float y) {
 		serverPos_interpolation.set(x, y);
 		interpolation = true;
+	}
+	
+	protected void setAnimation(int index, Animation animation){
+		animations[index] = animation;
 	}
 
 	public String getID() {

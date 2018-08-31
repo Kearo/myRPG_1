@@ -157,7 +157,7 @@ public class World {
 		playersMap = new HashMap<String, Players>();
 		enemyMap = new HashMap<String, Enemy>();
 		skillMap = new HashMap<String, Skill>();
-		
+
 		inputBuffer = new ArrayList<String>();
 
 		this.world = new Matrix4f().setTranslation(new Vector3f(0));
@@ -306,10 +306,10 @@ public class World {
 	private void onlineMode() {
 		List<String> tempBuffer2 = new ArrayList<String>(inputBuffer);
 		inputBuffer.clear();
-		for(String s : tempBuffer2){
+		for (String s : tempBuffer2) {
 			manageUDPInput(s);
 		}
-		
+
 		for (Enemy e : enemys) {
 			e.update();
 			if (e.getDelete()) {
@@ -325,7 +325,7 @@ public class World {
 
 		if (serverWorld) {
 			if (globalEnemyCounter < maxMopsOnMap && respawnTimer <= 0) {
-		//		addEnemy();
+				addEnemy();
 				if (globalEnemyCounter < maxMopsOnMap / 3) {
 					respawnTimer = fastMopRespawnTimer;
 				} else {
@@ -338,6 +338,7 @@ public class World {
 
 		for (Players p : players) {// todo
 			p.update();
+			// System.out.println(p.getTransform().pos.x);
 			if (p.getDelete()) {
 				remover.add(activeSkills.indexOf(p));
 			}
@@ -350,7 +351,7 @@ public class World {
 
 		for (Skill s : activeSkills) {
 			s.update();
-			//System.out.println(s.getTransform().pos.x);
+			// System.out.println(s.getTransform().pos.x);
 			if (s.getDelete()) {
 				remover.add(activeSkills.indexOf(s));
 			}
@@ -627,8 +628,8 @@ public class World {
 				break;
 			case "hit":
 				s = skillMap.get(distributor[2]);
-				s.hit(distributor[3], Float.parseFloat(distributor[4]),
-						Float.parseFloat(distributor[5]), distributor[1]);
+				s.hit(distributor[3], Float.parseFloat(distributor[4]), Float.parseFloat(distributor[5]),
+						distributor[1]);
 				break;
 			case "despawn": // (monster/player)/ID/poX/posY/
 				if (distributor[1].equals("player")) {
@@ -752,7 +753,7 @@ public class World {
 		}
 	}
 
-	public void render(TileRenderer render, Shader shader) {
+	public synchronized void render(TileRenderer render, Shader shader) {
 		int posX = (int) camera.getPosition().x / (scale * 2);
 		int posY = (int) camera.getPosition().y / (scale * 2);
 
@@ -763,8 +764,6 @@ public class World {
 					render.renderTile(t, i - posX - ((int) viewX / 2) + 1, -j - posY + ((int) viewY / 2), shader, world,
 							camera);
 				}
-				// worldtiles.bindTile(shader, 1, 1);
-				// Assets.getModel().render();
 			}
 		}
 
@@ -805,7 +804,6 @@ public class World {
 				}
 			}
 		}
-		mainPlayer.render(shader, camera, this);
 	}
 
 	private void manageInput() {
@@ -837,10 +835,10 @@ public class World {
 		activeSkills.add(s);
 		skillMap.put(s.getID(), s);
 		if (online && serverWorld) {
-			s.setID(skillIDcounter+ ":"+ s.getID());
-			sendBuffer.add(new String("attack/" + s.getID() + "/"
-					+ s.getTransform().pos.x + "/" + s.getTransform().pos.y + "/" + s.getInvokerID() + "/"
-					+ s.getDirection().x + "/" + s.getDirection().y + "/"));
+			s.setID(skillIDcounter + ":" + s.getID());
+			sendBuffer
+					.add(new String("attack/" + s.getID() + "/" + s.getTransform().pos.x + "/" + s.getTransform().pos.y
+							+ "/" + s.getInvokerID() + "/" + s.getDirection().x + "/" + s.getDirection().y + "/"));
 		}
 	}
 
@@ -850,9 +848,9 @@ public class World {
 		activeSkills.add(s);
 		skillMap.put(id, s);
 		if (online && serverWorld) {
-			s.setID(skillIDcounter+ ":"+ s.getID());
-			sendBuffer.add(new String("attack/" + s.getID() + "/" + x + "/" + y + "/" + invokerID
-					+ "/" + directionX + "/" + directionY + "/"));
+			s.setID(skillIDcounter + ":" + s.getID());
+			sendBuffer.add(new String("attack/" + s.getID() + "/" + x + "/" + y + "/" + invokerID + "/" + directionX
+					+ "/" + directionY + "/"));
 		}
 	}
 
@@ -884,9 +882,9 @@ public class World {
 		}
 		mainPlayer = new Mainplayer(this, id, i1 * 2, i2 * 2);
 		camera.getPosition().set(transform.pos.mul(-scale, new Vector3f()));
+		players.add(mainPlayer);
+		playersMap.put(id, mainPlayer);
 		if (online) {
-			players.add(mainPlayer);
-			playersMap.put(id, mainPlayer);
 			manageUDPOutput(new String("login/" + id + "/" + address + "/" + i1 * 2 + "/" + i2 * 2 + "/"), "server");
 		}
 	}
@@ -1035,8 +1033,8 @@ public class World {
 	public void removeAddress(InetAddress address) {
 		addresses.remove(address);
 	}
-	
-	public void addInput(String s){
+
+	public void addInput(String s) {
 		inputBuffer.add(s);
 	}
 }

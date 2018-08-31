@@ -28,8 +28,8 @@ public class GameLogicManager implements Runnable{
 			address = ip;
 		}
 		window = GameManager.getWindow();
-		Gui.initGui();
 		init();
+		Gui.initGui();
 	}
 	
 	public void startThread(){
@@ -39,7 +39,6 @@ public class GameLogicManager implements Runnable{
 	
 	private static void init(){
 		if(online){
-			World.initTex();	
 			tcp = new TCPClient(address, 8889);
 			
 			tcp.send("login/"+playerName+"/"+pw);
@@ -86,6 +85,7 @@ public class GameLogicManager implements Runnable{
 			world.correctCamera(GameManager.getWindow());
 			
 			endTime = System.currentTimeMillis();
+			
 			try {
 				Thread.sleep(endTime-startTime+interval);
 			} catch (InterruptedException e) {
@@ -123,7 +123,7 @@ public class GameLogicManager implements Runnable{
 		return world.getScale();
 	}
 	
-	public static void render(Shader shader, TileRenderer render){
+	public synchronized static void render(Shader shader, TileRenderer render){
 		world.render(render, shader);
 	}
 	
